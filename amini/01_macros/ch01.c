@@ -33,6 +33,25 @@
 #define SIZE 5    
 
 
+void print_bytes(void* data, size_t lenght) {
+    char delim = ' ';
+    unsigned char* ptr = data;
+
+    for (size_t i = 0; i < lenght; i++) {
+        printf("%c 0x%x", delim, *ptr);
+        delim = ',';
+        ptr++;
+    }
+    printf("\n");
+}
+
+int* create_an_integer(int default_value) {
+    int* var_ptr = (int*) malloc(sizeof(int));
+    *var_ptr = default_value;
+    return var_ptr;     
+} 
+
+
 
 int main(int argc, char** argv) {
 
@@ -78,7 +97,7 @@ int main(int argc, char** argv) {
     /*LOOP(copy paste cut)
     LOOP(copy, paste, cut)
     LOOP(copy, paste, cut, select)*/
-    int var = 1;
+    /*int var = 1;
     int* int_ptr = NULL;
     int_ptr = &var;
     
@@ -106,7 +125,18 @@ int main(int argc, char** argv) {
             break;
         }
         ptr++;
-    }
-    
+    } 
+    int a = 9;
+    double b = 18.9;
+
+    print_bytes(&a, sizeof(int));
+    print_bytes(&b, sizeof(double));*/
+
+    int* ptr = NULL;
+    ptr = create_an_integer(10);
+
+    printf("%d\n", *ptr);
+    free(ptr);
+
     return 0;
 }
