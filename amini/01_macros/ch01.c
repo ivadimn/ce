@@ -51,6 +51,19 @@ int* create_an_integer(int default_value) {
     return var_ptr;     
 } 
 
+void func(int* a) {
+    int b = 9;
+    *a = 5;
+    a = &b;
+}
+
+int sum(int a, int b) {
+    return a + b;
+}
+
+int subtract(int a, int b) {
+    return a - b;
+}
 
 
 int main(int argc, char** argv) {
@@ -130,13 +143,33 @@ int main(int argc, char** argv) {
     double b = 18.9;
 
     print_bytes(&a, sizeof(int));
-    print_bytes(&b, sizeof(double));*/
+    print_bytes(&b, sizeof(double));
 
     int* ptr = NULL;
     ptr = create_an_integer(10);
 
     printf("%d\n", *ptr);
-    free(ptr);
+    free(ptr); 
+    int x = 3;
+    int* xptr = &x;
+
+    printf("Value x before function call: %d\n", x);
+    printf("Value pointer x before function call: %p\n", (void*)xptr);
+    func(xptr);
+    printf("\n");
+    printf("Value x after function call: %d\n", x);
+    printf("Value pointer x after function call: %p\n", (void*)xptr);    
+    */
+   int (* func_ptr)(int, int);
+   func_ptr = NULL;
+
+   func_ptr = &sum;
+   int result = func_ptr(5, 4);
+   printf("Sum: %d\n", result);
+
+   func_ptr = &subtract;
+   result = func_ptr(5, 4);
+   printf("Subtract: %d\n", result);
 
     return 0;
 }
