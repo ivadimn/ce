@@ -30,17 +30,48 @@
 #define LOOP(...) \
     LOOP_1(__VA_ARGS__)  
 
-#define SIZE 5    
+#define SIZE 5   
+
+typedef int bool_t;
+typedef bool_t (*less_then_func_t)(int, int);
+
+struct sample_t {
+    char first;
+    char second;
+    char third;
+    short fourth;
+};
+
+typedef struct {
+    int x;
+    int y;    
+} point_t;
+
+typedef struct {
+    point_t center;
+    int radius;    
+} circle_t;
+
+void print_size(struct sample_t *var)
+{
+    printf("Size: %lu bytes\n", sizeof*var);
+}
 
 
-void print_bytes(void* data, size_t lenght) {
-    char delim = ' ';
-    unsigned char* ptr = data;
 
-    for (size_t i = 0; i < lenght; i++) {
-        printf("%c 0x%x", delim, *ptr);
-        delim = ',';
-        ptr++;
+bool_t less_then(int a, int b) {
+    return a < b ? 1 : 0;
+}
+
+bool_t less_then_modular(int a, int b) {
+    return (a % 5) < (b % 5) ? 1 : 0;
+}
+
+void print_bytes(struct sample_t *var) {
+    unsigned char* ptr = (unsigned char*) var;
+
+    for (int i = 0; i < sizeof(*var); i++, ptr++) {
+        printf("%d ", (unsigned int) *ptr);
     }
     printf("\n");
 }
@@ -159,17 +190,44 @@ int main(int argc, char** argv) {
     printf("\n");
     printf("Value x after function call: %d\n", x);
     printf("Value pointer x after function call: %p\n", (void*)xptr);    
-    */
-   int (* func_ptr)(int, int);
-   func_ptr = NULL;
+    
+    int (* func_ptr)(int, int);
+    func_ptr = NULL;
 
-   func_ptr = &sum;
-   int result = func_ptr(5, 4);
-   printf("Sum: %d\n", result);
+    func_ptr = &sum;
+    int result = func_ptr(5, 4);
+    printf("Sum: %d\n", result);
 
-   func_ptr = &subtract;
-   result = func_ptr(5, 4);
-   printf("Subtract: %d\n", result);
+    func_ptr = &subtract;
+    result = func_ptr(5, 4);
+    printf("Subtract: %d\n", result);
+    
 
-    return 0;
+   less_then_func_t func_ptr = NULL;
+   func_ptr = &less_then;
+   bool_t result = func_ptr(3, 7);
+   printf("%d\n", result);
+
+   func_ptr = &less_then_modular;
+   result = func_ptr(3, 7);
+   printf("%d\n", result);
+   
+   struct sample_t var;
+   var.first = 'A';
+   var.second = 'B';
+   var.third = 'C';
+   var.fourth = 765;
+   print_size(&var);
+   print_bytes(&var); 
+   */
+    circle_t c;
+    circle_t *p1 = &c;
+    point_t *p2 = (point_t*) &c;
+    int* p3 = (int*) &c;
+
+    printf("p1: %p\n", (void*) p1);
+    printf("p2: %p\n", (void*) p2);
+    printf("p3: %p\n", (void*) p3); 
+
+   return 0;
 }
