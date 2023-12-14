@@ -1,21 +1,54 @@
+#include <stdlib.h>
 #include <gtk/gtk.h>
+#include <sqlite3.h>
 
-static void on_activate(GtkApplication* app) {
-	GtkWidget* window = gtk_application_window_new(app);
-	gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
-	GtkWidget* button = gtk_button_new_with_label("Hello GTK!");
-	
-	g_signal_connect_swapped(button, "clicked", 
-							G_CALLBACK(gtk_window_close), window);
-	gtk_container_add(GTK_CONTAINER(window), button);
-	//gtk_window_present (GTK_WINDOW (window));
-	gtk_widget_show_all(window);
+static void
+print_hello (GtkWidget *widget,
+             gpointer   data)
+{
+  g_print ("SQLite version: %s\n", sqlite3_libversion());
 }
 
-int main(int argc, char** argv) {
-	GtkApplication* app = gtk_application_new("com.example.GtkApplication",
-											 G_APPLICATION_FLAGS_NONE);
-	g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
-	return g_application_run(G_APPLICATION(app), argc, argv);
-		
+
+static void
+activate (GtkApplication *app,
+          gpointer        user_data)
+{
+  GtkWidget *window;
+  GtkWidget *button;
+  GtkWidget *box;
+
+  window = gtk_application_window_new (app);
+  gtk_window_set_title (GTK_WINDOW (window), "Window");
+  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
+
+  box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+  gtk_widget_set_halign (box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign (box, GTK_ALIGN_CENTER);
+
+  gtk_window_set_child (GTK_WINDOW (window), box);
+
+  button = gtk_button_new_with_label ("Hello World");
+
+  g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
+  g_signal_connect_swapped (button, "clicked", G_CALLBACK (gtk_window_destroy), window);
+
+  gtk_box_append (GTK_BOX (box), button);
+
+  gtk_window_present (GTK_WINDOW (window));
+}
+
+int
+main (int    argc,
+      char **argv)
+{
+  GtkApplication *app;
+  int status;
+
+  app = gtk_application_new ("org.gtk.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+  status = g_application_run (G_APPLICATION (app), argc, argv);
+  g_object_unref (app);
+
+  return status;
 }
