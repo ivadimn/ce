@@ -8,42 +8,43 @@
 
 int main() 
 {
+	
 	//Output a string to the console
-	printf("String: ");
-	printf("%s\r\n","Hello, World!!!");
+	printf("Длина: ");
+	printf("%d\n",sizeof(long));
+	printf("%d\n",sizeof(unsigned long));
+
 	//Output character to console
 	printf("Char: ");
-	printf("%c\r\n",131);
-#if 0	
+	printf("%c, длина: %ld\r\n",131, sizeof(char));
 	//Output a signed integer to the console
 	printf("Signed integer: ");
-	printf("%d\r\n",3000000000);
+	printf("%ld, длина: %ld\r\n",3000000000, sizeof(int));
 	//Output a unsigned integer to the console
 	printf("Unigned integer: ");
-	printf("%u\r\n",3000000000);
+	printf("%lu, длина: %ld\r\n",3000000000, sizeof(unsigned int));
 	//Output a signed short integer to the console
 	printf("Signed short: ");
-	printf("%hd\r\n",40000);
-	/*
+	printf("%hd, длина: %ld\r\n",40000, sizeof(short));
+	
 	//Output a unsigned short integer to the console
 	printf("Unsigned short: ");
-	printf("%hu\r\n",40000);
-	*/
+	printf("%hu, длина: %ld\r\n",40000, sizeof(unsigned short));
+	
 	//Output a signed long integer to the console
 	printf("Signed long: ");
-	printf("%i\r\n",18446744073709551615);
+	printf("%i, длина: %lu\r\n",18446744073709551615, sizeof(long));
 	//Output a unsigned long integer to the console
 	printf("Unsigned long: ");
-	printf("%llu\r\n",18446744073709551615);
-#endif	
+	printf("%llu, длина: %lu\r\n",18446744073709551615, sizeof(unsigned long));
 	//Outputting a floating-point number to the console
 	printf("Float: ");
-	printf("%f\r\n",12.456f);
+	printf("%f, длина: %ld\r\n",12.456f, sizeof(float));
 	//Outputting a 64-bit floating-point number to the console
 	printf("Double: ");
-	printf("%lf\r\n",12345.67891);
+	printf("%lf, длина: %ld\r\n",12345.67891, sizeof(double));
 	//Hex output to console
 	printf("Hex: ");
-	printf("0x%llX\r\n",3000000000);
+	printf("0x%lX\r\n",3000000000);
      return 0;
 }

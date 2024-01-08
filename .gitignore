@@ -44,6 +44,14 @@
 *.idb
 *.pdb
 
+# Data files
+*.jpg
+*.png
+*.jpeg
+*.bmp
+*.gif
+*.tiff
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
