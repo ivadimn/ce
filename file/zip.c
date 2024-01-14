@@ -1,12 +1,12 @@
 #include "common.h"
 #include "zip.h"
-#include <stdio.h>
 #include <fcntl.h>
 
 char buffer[BUF_SIZE];
 
-
-
+/*
+Функции перевода времени и дата в текстовую строку
+*/
 int get_str_time(char* str_time, uint16_t r_time) {
     int buf_size = 8;
     int count = snprintf(str_time, sizeof(char) * buf_size + 1, "%2d:%2d:%2d", 
@@ -36,29 +36,107 @@ int get_str_date(char* str_date, uint16_t r_date) {
     }
     return 1;
 }
+//********************************************************************************
 
-void print_file_info(cfh_short_t header) {
+/*
+Функции работы со структурой конца записи центрального каталога
+*/
+ecodr_t* create_ecodr() {
+    ecodr_t* ecodr;
+    ecodr = (ecodr_t*) malloc(sizeof(ecodr_t));
+    ecodr->comment = NULL;
+    return ecodr;
+}
+
+void delete_ecodr(ecodr_t* ecodr) {
+    if(ecodr->comment != NULL)
+        free(ecodr->comment);
+    free(ecodr);   
+}
+
+void add_comment(ecodr_t* ecodr, char* comment) {
+    ecodr->comment = (char*) malloc(strlen(comment));
+    memcpy(ecodr->comment, comment, strlen(comment));
+}
+
+void print_ecodr_info(ecodr_t* ecodr) {
+    in_ecodr_t* inecodr = &(ecodr->ecodr);
+    printf("Номер этого диска: %u\n", inecodr->disk_number);
+    printf("Номер диска, на котором начинается центральный каталог: %u\n", 
+            inecodr->cfh_start_disk);
+    printf("Количество записей центрального каталога на диске: %u\n", 
+            inecodr->cfh_disk_count);
+    printf("Всего записей центрального каталога: %u\n", inecodr->cfh_count);
+    printf("Размер центрального каталога: %u\n", inecodr->cfh_size);
+    printf("Смещение центрального каталога на диске: %x\n", 
+            inecodr->cfh_offset);
+    if (ecodr->comment != NULL) {
+        printf("Комментарий: %s\n", ecodr->comment);    
+    }
+}
+//********************************************************************************** 
+
+
+/*
+Функции работы с записью центрального каталога
+*/
+cfh_t* create_cfh(){
+    cfh_t* cfh = (cfh_t*) malloc(sizeof(cfh_t));
+    cfh->filename = NULL;
+    cfh->filecomment = NULL;
+    cfh->extra = NULL;
+}
+
+void delete_cfh(cfh_t* cfh) {
+    if (cfh->filename != NULL)
+        free(cfh->filename);
+    if (cfh->filecomment != NULL)
+        free(cfh->filecomment);
+    if (cfh->extra != NULL)
+        free(cfh->extra);
+    free(cfh);            
+}
+
+void add_file(cfh_t* cfh, char* filename) {
+    cfh->filename = (char*) malloc(strlen(filename));
+    memcpy(cfh->filename, filename, strlen(filename));
+}
+
+void add_filecomment(cfh_t* cfh, char* filecomment) {
+    cfh->filecomment = (char*) malloc(strlen(filecomment));
+    memcpy(cfh->filecomment, filecomment, strlen(filecomment));
+}
+void add_extradata(cfh_t* cfh, uint8_t* extra) {
+    cfh->extra = (uint8_t*) malloc(sizeof(uint8_t) * cfh->cfh.extrafield_len);
+    memcpy(cfh->extra, extra, cfh->cfh.extrafield_len);
+}
+
+
+void print_file_info(cfh_t* cfh) {
     char time[8];
     char date[10];
-    
-    printf("*************************************************\n");
-    printf("Версия: %x\n", header.version);
-    printf("Флаги: %x\n", header.flags);
-    printf("Метод сжатия: %x\n", header.compression);
+    cfh_short_t* header = &(cfh->cfh);
 
-    get_str_time(time, header.modification_time);
+    printf("*************************************************\n");
+    printf("Версия: %x\n", header->version);
+    printf("Флаги: %x\n", header->flags);
+    printf("Метод сжатия: %x\n", header->compression);
+
+    get_str_time(time, header->modification_time);
     printf("Время модификации: %s\n", time);
 
-    get_str_date(date, header.modification_date);
+    get_str_date(date, header->modification_date);
     printf("Дата модификации: %s\n", date);
 
-    printf("CRC: %x\n", header.crc);
-    printf("Сжатый размер: %x\n", header.compressed_size);
-    printf("Несжатый размер: %x\n", header.uncompressed_size);
-    printf("Длина имени файла: %x\n", header.filename_len);
-    printf("Дополнительная длина поля: %x\n", header.extrafield_len);
+    printf("CRC: %x\n", header->crc);
+    printf("Сжатый размер: %x\n", header->compressed_size);
+    printf("Несжатый размер: %x\n", header->uncompressed_size);
+    printf("Длина имени файла: %x\n", header->filename_len);
+    printf("Дополнительная длина поля: %x\n", header->extrafield_len);
     printf("*************************************************\n");
 }
+//*************************************************************************************************
+
 
 int zip_contains(char* filename) {
     
@@ -83,7 +161,7 @@ int zip_contains(char* filename) {
                     printf("Имя файла: %s, это каталог\n", buffer);
                 else {    
                     printf("%d. Имя файла: %s\n", index++, buffer);
-                    print_file_info(zh);    
+                    //print_file_info(zh);    
                 }    
 
             }
@@ -96,28 +174,37 @@ int zip_contains(char* filename) {
     return result;
 }
 
-int zip_preview(char* filename) {
+int zip_preview(char* filename, ecodr_t *ecodr)  {
     uint32_t sig;
-    int cfh_count = 0;
+    int cfh_count = -1;
+    in_ecodr_t *in_ecodr = &(ecodr->ecodr);
     off_t off = 4;
-    int fd = open(filename, O_RDONLY);
+    char comment[BUF_SIZE];
 
+    int fd = open(filename, O_RDONLY);
     if (fd == -1)
         err_sys("Ошибка открытия файла: %s", filename);    
 
-    off_t eof = lseek(fd, off, SEEK_END);
-    printf("off_t %ld\n", eof);
+    off_t eof = lseek(fd, EOCDR_BASE_SZ, SEEK_END);
+    
     while(eof > 0) {
         read(fd, &sig, sizeof(uint32_t));
-        if (sig == CFH_SIG) {
-            printf("founded off_t %ld\n", eof);
+        if (sig == EOCDR_SIG) {
+            read(fd, in_ecodr,  sizeof(in_ecodr_t));
+            cfh_count = in_ecodr->cfh_count;
+            if (in_ecodr->comment_len > 0) {
+                read(fd, &comment, sizeof(char) * in_ecodr->comment_len);
+                comment[in_ecodr->comment_len] = '\0';
+                add_comment(ecodr, comment);
+            }
             break;
         }
         else {
-            lseek(fd, -(off + 1), SEEK_CUR);
+            eof = lseek(fd, -(off + 1), SEEK_CUR);
         }
     }
     close(fd);
-
     return cfh_count;    
 }
+
+

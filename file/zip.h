@@ -1,11 +1,12 @@
 #ifndef _ZIP_H_
 #define _ZIP_H_
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 #define CFH_SIG   0x02014b50   //Center catalog file header
 #define LFH_SIG   0x04034b50    
 #define EOCDR_SIG 0x06054b50
+#define EOCDR_BASE_SZ 22
 #define BUF_SIZE 4096
 
 #define SECONDS(a) (((a) & (0x1F)) * 2)
@@ -16,8 +17,36 @@
 #define MONTH(a) ((((a) & (0xF)) >> 5) + 1)
 #define YEAR(a) (((a) >> 9) + 1980)
 
+/*
+Определение структуры: Конец записи центрального каталога  
+*/
+//*********************************************************************
+typedef struct __attribute__((__packed__)) {
+    uint16_t disk_number;
+    uint16_t cfh_start_disk;
+    uint16_t cfh_disk_count;
+    uint16_t cfh_count;
+    uint32_t cfh_size;
+    uint32_t cfh_offset;
+    uint16_t comment_len;
+} in_ecodr_t;
+
+typedef struct __attribute__((__packed__)) {
+    in_ecodr_t ecodr;
+    char* comment;
+    uint8_t is_valid;
+} ecodr_t;
+
+ecodr_t* create_ecodr();
+void delete_ecodr(ecodr_t*);
+void add_comment(ecodr_t*, char*);
+void print_ecodr_info(ecodr_t*);
+//***********************************************************************
 
 
+/*
+Структуры описывающие записи центрального каталга
+*/
 typedef struct __attribute__((__packed__)) {
     //4
     uint16_t version;
@@ -45,11 +74,18 @@ typedef struct {
     uint8_t* extra;
 } cfh_t;
 
-void print_file_info(cfh_short_t);
+cfh_t* create_cfh();
+void delete_cfh(cfh_t*);
+void add_file(cfh_t*, char*);
+void add_filecomment(cfh_t*, char*);
+void add_extradata(cfh_t*, uint8_t*);
+void print_file_info(cfh_t*); 
+
+
+//********************************************************************************
 int zip_contains(char*);
 int get_str_time(char*, uint16_t);
 int get_str_date(char*, uint16_t);
-int zip_preview(char*);
-
+int zip_preview(char*, ecodr_t*);
 
 #endif

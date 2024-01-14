@@ -7,6 +7,7 @@ char digits[] = "0123456789";
 
 int main(int argc, char** argv) {
     
+    ecodr_t* ecodr = create_ecodr();
     /*int fd;
     if ((fd = creat("file.hole", FILE_MODE)) < 0)
         err_sys("Ошибка вызова create");
@@ -46,11 +47,19 @@ int main(int argc, char** argv) {
     printf("Дата модифиекации: %2u:%2u:%4u\n", zd.day, zd.month, zd.year);
     close(fd); */
 
-    int iz = zip_preview(argv[1]);
-    if (iz > 0)
-        printf("Это архивный файл!!\n");
-    else    
-        printf("Это неархивный файл!!\n");
-
+    int iz = zip_preview(argv[1], ecodr);
+    if (iz < 0) {
+        printf("Файл %s не содержит архива.\n", argv[1]);
+    }
+    else if (iz == 0)
+    {
+        printf("Файл %s содержит пустой архив.\n", argv[1]);
+    }
+    else {
+        printf("Файл %s содержит архив.\n", argv[1]);
+        print_ecodr_info(ecodr);
+    }
+  
+    delete_ecodr(ecodr);
     return 0;
 }
