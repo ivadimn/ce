@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
     else {
         printf("Файл %s содержит архив.\n", argv[1]);
         print_ecodr_info(ecodr);
+        zip_contains(argv[1], ecodr);
     }
   
     delete_ecodr(ecodr);

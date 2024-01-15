@@ -138,22 +138,33 @@ void print_file_info(cfh_t* cfh) {
 //*************************************************************************************************
 
 
-int zip_contains(char* filename) {
+int zip_contains(char* filename, ecodr_t* ecodr) {
     
-    uint32_t sig;
+    uint32_t sig = 0;
     cfh_short_t zh;
     int result = -1;
     int index = 1;
+    off_t off = 0;
 
     int fd = open(filename, O_RDONLY);
     if (fd == -1)
         err_sys("Ошибка открытия файла: %s", filename);
 
-    while( read(fd, &sig, sizeof(uint32_t)) == sizeof(uint32_t)) {
+    read(fd, &sig, sizeof(uint32_t)); 
+    while(sig != LFH_SIG) {
+        off = lseek(fd, -(sizeof(uint32_t) - sizeof(uint8_t)), SEEK_CUR);
+        read(fd, &sig, sizeof(uint32_t));
+    }
+    
+    printf("Нашли Local File Header");
+    off = lseek(fd, (ecodr->ecodr.cfh_offset - sizeof(uint32_t)), SEEK_CUR);
+    read(fd, &sig, sizeof(uint32_t));
+    printf("Current SIG: %x\n", sig);
+    /*while( read(fd, &sig, sizeof(uint32_t)) == sizeof(uint32_t)) {
         if (sig == CFH_SIG) {
-            /*printf("sig = %x\n", sig);
+            printf("sig = %x\n", sig);
             result = 1;
-            break;*/
+            break;
             if (read(fd, &zh, sizeof(cfh_short_t)) == sizeof(cfh_short_t)) {
                 read(fd, &buffer, sizeof(char) * zh.filename_len);
                 buffer[zh.filename_len] = '\0';
@@ -169,7 +180,7 @@ int zip_contains(char* filename) {
         else {
             lseek(fd, -(sizeof(uint32_t) - sizeof(uint8_t)), SEEK_CUR);
         }
-    }
+    }*/
     close(fd);
     return result;
 }

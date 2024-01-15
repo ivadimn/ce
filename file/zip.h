@@ -83,7 +83,7 @@ void print_file_info(cfh_t*);
 
 
 //********************************************************************************
-int zip_contains(char*);
+int zip_contains(char*, ecodr_t*);
 int get_str_time(char*, uint16_t);
 int get_str_date(char*, uint16_t);
 int zip_preview(char*, ecodr_t*);
