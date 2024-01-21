@@ -3,11 +3,10 @@
 
 #include <stdint.h>
 
-#define CFH_SIG   0x02014b50   //Center catalog file header
-#define LFH_SIG   0x04034b50    
-#define EOCDR_SIG 0x06054b50
+#define CFH_SIG   0x02014b50   //сигнатура заголовка файла центрального каталога
+#define LFH_SIG   0x04034b50   //сигнатура заголовка локального файла 
+#define EOCDR_SIG 0x06054b50   //сигнатура конца записи центрального каталога 
 #define EOCDR_BASE_SZ 22
-#define BUF_SIZE 4096
 
 #define SECONDS(a) (((a) & (0x1F)) * 2)
 #define MINUTES(a) (((a) & (0x3F)) >> 5)
@@ -74,16 +73,18 @@ typedef struct {
     uint8_t* extra;
 } cfh_t;
 
+cfh_t** create_cfh_array(uint16_t); 
 cfh_t* create_cfh();
 void delete_cfh(cfh_t*);
+void delete_cfh_array(uint16_t, cfh_t**); 
 void add_file(cfh_t*, char*);
 void add_filecomment(cfh_t*, char*);
 void add_extradata(cfh_t*, uint8_t*);
-void print_file_info(cfh_t*); 
+void print_file_info(uint16_t, cfh_t*); 
 
 
 //********************************************************************************
-int zip_contains(char*, ecodr_t*);
+cfh_t** zip_contains(char*, ecodr_t*);
 int get_str_time(char*, uint16_t);
 int get_str_date(char*, uint16_t);
 int zip_preview(char*, ecodr_t*);

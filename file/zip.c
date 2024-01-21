@@ -80,11 +80,27 @@ void print_ecodr_info(ecodr_t* ecodr) {
 /*
 Функции работы с записью центрального каталога
 */
+cfh_t** create_cfh_array(uint16_t count) {
+    cfh_t **cfh_arr = (cfh_t**) malloc(sizeof(cfh_t*) * count);
+    for (uint16_t i = 0; i < count; i++) {
+        cfh_arr[i] = create_cfh();    
+    }
+    return cfh_arr;
+} 
+
+void delete_cfh_array(uint16_t count, cfh_t** cfh_arr) {
+    for (uint16_t i = 0; i < count; i++) {
+        delete_cfh(cfh_arr[i]);    
+    }
+    free(cfh_arr);
+}
+
 cfh_t* create_cfh(){
     cfh_t* cfh = (cfh_t*) malloc(sizeof(cfh_t));
     cfh->filename = NULL;
     cfh->filecomment = NULL;
     cfh->extra = NULL;
+    return cfh;
 }
 
 void delete_cfh(cfh_t* cfh) {
@@ -112,79 +128,73 @@ void add_extradata(cfh_t* cfh, uint8_t* extra) {
 }
 
 
-void print_file_info(cfh_t* cfh) {
+void print_file_info(uint16_t index, cfh_t* cfh) {
     char time[8];
     char date[10];
     cfh_short_t* header = &(cfh->cfh);
 
     printf("*************************************************\n");
-    printf("Версия: %x\n", header->version);
-    printf("Флаги: %x\n", header->flags);
-    printf("Метод сжатия: %x\n", header->compression);
-
+    if (header->external_attr & 0x10) {
+        printf("%u) Имя файла: %s, это каталог\n", index, cfh->filename);    
+    }
+    else {
+        printf("%u) Имя файла: %s\n", index, cfh->filename);
+        printf("\tСжатый размер: %u\n", header->compressed_size);
+        printf("\tНесжатый размер: %u\n", header->uncompressed_size);
+    }
     get_str_time(time, header->modification_time);
-    printf("Время модификации: %s\n", time);
-
+    printf("\tВремя модификации: %s\n", time);
     get_str_date(date, header->modification_date);
-    printf("Дата модификации: %s\n", date);
-
-    printf("CRC: %x\n", header->crc);
-    printf("Сжатый размер: %x\n", header->compressed_size);
-    printf("Несжатый размер: %x\n", header->uncompressed_size);
-    printf("Длина имени файла: %x\n", header->filename_len);
-    printf("Дополнительная длина поля: %x\n", header->extrafield_len);
+    printf("\tДата модификации: %s\n", date);
     printf("*************************************************\n");
 }
 //*************************************************************************************************
 
-
-int zip_contains(char* filename, ecodr_t* ecodr) {
-    
+/*
+    Чтение содержимого архива
+*/
+cfh_t** zip_contains(char* filename, ecodr_t* ecodr) {
     uint32_t sig = 0;
-    cfh_short_t zh;
-    int result = -1;
-    int index = 1;
-    off_t off = 0;
+    cfh_short_t *cfh = NULL;
+    int index = 0;
+    cfh_t **cfh_arr = NULL;
 
     int fd = open(filename, O_RDONLY);
     if (fd == -1)
         err_sys("Ошибка открытия файла: %s", filename);
 
-    read(fd, &sig, sizeof(uint32_t)); 
-    while(sig != LFH_SIG) {
-        off = lseek(fd, -(sizeof(uint32_t) - sizeof(uint8_t)), SEEK_CUR);
-        read(fd, &sig, sizeof(uint32_t));
-    }
-    
-    printf("Нашли Local File Header");
-    off = lseek(fd, (ecodr->ecodr.cfh_offset - sizeof(uint32_t)), SEEK_CUR);
-    read(fd, &sig, sizeof(uint32_t));
-    printf("Current SIG: %x\n", sig);
-    /*while( read(fd, &sig, sizeof(uint32_t)) == sizeof(uint32_t)) {
-        if (sig == CFH_SIG) {
-            printf("sig = %x\n", sig);
-            result = 1;
-            break;
-            if (read(fd, &zh, sizeof(cfh_short_t)) == sizeof(cfh_short_t)) {
-                read(fd, &buffer, sizeof(char) * zh.filename_len);
-                buffer[zh.filename_len] = '\0';
-                if (zh.external_attr & 0x10)
-                    printf("Имя файла: %s, это каталог\n", buffer);
-                else {    
-                    printf("%d. Имя файла: %s\n", index++, buffer);
-                    //print_file_info(zh);    
-                }    
+    cfh_arr = create_cfh_array(ecodr->ecodr.cfh_count);    
 
-            }
+    readf(fd, &sig, sizeof(uint32_t)); 
+    while(sig != LFH_SIG) {
+        lseek(fd, -(sizeof(uint32_t) - sizeof(uint8_t)), SEEK_CUR);
+        readf(fd, &sig, sizeof(uint32_t));
+    }
+        
+    lseek(fd, (ecodr->ecodr.cfh_offset - sizeof(uint32_t)), SEEK_CUR);
+    readf(fd, &sig, sizeof(uint32_t));
+    
+    while( sig == CFH_SIG) {
+        cfh = &(cfh_arr[index]->cfh);
+        if (readf(fd, cfh, sizeof(cfh_short_t)) == sizeof(cfh_short_t)) {
+            readf(fd, &buffer, sizeof(char) * cfh->filename_len);
+            buffer[cfh->filename_len] = '\0';
+            add_file(cfh_arr[index], buffer);
+            lseek(fd, (cfh->extrafield_len + cfh->filecomm_len), SEEK_CUR);
+            index++;
+            readf(fd, &sig, sizeof(uint32_t));
         }
         else {
-            lseek(fd, -(sizeof(uint32_t) - sizeof(uint8_t)), SEEK_CUR);
+            break;
         }
-    }*/
+    }    
     close(fd);
-    return result;
+    return cfh_arr;
 }
 
+/*
+Предварительный просмотр файла и определение содержит ли он архив
+*/
 int zip_preview(char* filename, ecodr_t *ecodr)  {
     uint32_t sig;
     int cfh_count = -1;
@@ -199,12 +209,12 @@ int zip_preview(char* filename, ecodr_t *ecodr)  {
     off_t eof = lseek(fd, EOCDR_BASE_SZ, SEEK_END);
     
     while(eof > 0) {
-        read(fd, &sig, sizeof(uint32_t));
+        readf(fd, &sig, sizeof(uint32_t));
         if (sig == EOCDR_SIG) {
-            read(fd, in_ecodr,  sizeof(in_ecodr_t));
+            readf(fd, in_ecodr,  sizeof(in_ecodr_t));
             cfh_count = in_ecodr->cfh_count;
             if (in_ecodr->comment_len > 0) {
-                read(fd, &comment, sizeof(char) * in_ecodr->comment_len);
+                readf(fd, &comment, sizeof(char) * in_ecodr->comment_len);
                 comment[in_ecodr->comment_len] = '\0';
                 add_comment(ecodr, comment);
             }
