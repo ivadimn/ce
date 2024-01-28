@@ -59,12 +59,15 @@ void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     fflush(NULL);
 }
 
-int readf(int fd, void* buf, unsigned len) {
-    int result = 0;
-    result = read(fd, buf, len);
-    if (result == -1) {
-        err_sys("Ошибка чтения файла: ");
-    }
-    return result;
-
+int64_t getFileSize(int fd) {
+    
+	int64_t fsize = 0;
+	struct stat fileStatbuff;
+	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
+		fsize = -1;
+	}
+	else{
+		fsize = fileStatbuff.st_size;
+	}
+	return fsize;
 }

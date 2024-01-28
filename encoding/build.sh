@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -Wpedantic -std=c11 main.c zip.c common.c -o zinfo
+gcc -Wall -Wextra -Wpedantic -std=c11 main.c tables.c common.c -o encode
