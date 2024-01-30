@@ -1,6 +1,7 @@
 #include "common.h"
 #include <errno.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 static void err_doit(int, int, const char*, va_list);
 
@@ -59,7 +60,7 @@ void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     fflush(NULL);
 }
 
-int64_t getFileSize(int fd) {
+int64_t get_file_size(int fd) {
     
 	int64_t fsize = 0;
 	struct stat fileStatbuff;

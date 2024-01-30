@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
+
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
 #define BUF_SIZE 4096
@@ -17,7 +18,7 @@
 void err_msg(const char*, ...);
 void err_cont(const char*, ...);
 void err_sys(const char*, ...) __attribute__((noreturn));
-int64_t getFileSize(int);
+int64_t get_file_size(int);
 
 #endif
 
