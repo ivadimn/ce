@@ -1,9 +1,8 @@
 #ifndef _DICT_H_
 #define _DICT_H_
 
-#include <unistd.h>
-
-typedef uint8_t alpha;
+#define CELL_CMP_EQ(a, b)  (memcmp((a), (b), strlen((char*)(a))) == 0)
+typedef unsigned char alpha;
 
 typedef struct cell_t {
     size_t count;
@@ -20,7 +19,14 @@ typedef struct dict_t {
     float mult;             //во столько раз увеличится размер dict           
 } dict_t;
 
+//static cell_t* create_cell(alpha* word); 
+//static void destroy_cell(cell_t* cell); 
+
 dict_t* create_dict(size_t, float, float);
+void destroy_dict(dict_t* dict);
+
+//static void _put(dict_t **dict, cell_t* cell);
+
 void put(dict_t **dict, alpha* word);
 cell_t* get_data(dict_t *dict, alpha* word);
 
