@@ -19,6 +19,7 @@ void err_msg(const char*, ...);
 void err_cont(const char*, ...);
 void err_sys(const char*, ...) __attribute__((noreturn));
 int64_t get_file_size(int);
+void* alloc(size_t size);
 
 #endif
 

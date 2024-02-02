@@ -3,27 +3,47 @@
 #include <string.h>
 
 // auto - static
+typedef unsigned char alpha;
+typedef enum {CHAR, INT, LONG, FLOAT, DOUBLE, STR} val_type_t;
 
-int f_fib()
-{
+void transform(alpha* k, void* v, val_type_t val_type) {
+    alpha* key;
+    void* value;
+    key = (alpha*) malloc(strlen((char*) k));
+    memcpy(key, k, strlen((char*) k));
+    switch (val_type)
+    {
+    case CHAR:
+        value = (char*) malloc(sizeof(char));
+        *((char*)value) = *((char*) v);
+        break;
+    case INT:
+        value = (int*) malloc(sizeof(int));
+        *((int*)value) = *((int*) v);
+        break;
+    case LONG:
+        value = (long*) malloc(sizeof(long));
+        *((long*)value) = *((long*) v);
+        break; 
+    case STR:
+        value = (alpha*) malloc(strlen((char*) v));
+        memcpy(value, v, strlen((char*) v));
+        break;           
+    default:
+        break;
+    }
 
-int first = 0, second = 1;
-int rez = first + second;
-    first = second;
-    second = rez;
-
-return rez;
+    printf("key = %s, val = %ld\n", key, *(long*)value);
+    free(key);
+    free(value);
 }
 
 int main()
 {
-    unsigned long count = 1000000;
-    unsigned long *pc = NULL;
-    unsigned char* value = NULL;
-    value = (unsigned char*) &count;
-    printf("size: %lu\n", strlen((char*) value));
-    pc = (unsigned long*) value;
-    printf("count: %lu\n", *pc);
+    //char* val = "any key";
+    long val = 14096;
+    alpha *key = "anyword";
+    transform(key, (void*) &val, LONG);
 
 }
 

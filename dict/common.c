@@ -72,3 +72,10 @@ int64_t get_file_size(int fd) {
 	}
 	return fsize;
 }
+
+void* alloc(size_t size) {
+    void *p = malloc(size);
+    if (p == NULL)
+        err_sys("Ошибка распределения памяти: ");
+    return p;    
+}

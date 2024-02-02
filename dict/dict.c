@@ -9,29 +9,25 @@ static const float DEFAULT_FACTOR = 0.72f;
 static const size_t DEFAULT_SIZE = 256;
 static const float MULT = 2.0f;
 
-static cell_t* create_cell(alpha* word) {
-    cell_t* cell = (cell_t*) malloc(sizeof(cell_t));
-    if (cell == NULL) 
-        err_sys("Ошибка распределения памяти: ");
+static cell_t* create_cell(alpha* key, void* val, val_type_t val_type) {
+    cell_t* cell = (cell_t*) alloc(sizeof(cell_t));
+    cell->key = (alpha*) alloc(strlen((char*) key));
+    memcpy(cell->key, key, strlen((char*) key));
 
-    cell->word = (alpha*) malloc(strlen((char*) word));
-    if (cell->word == NULL)
-        err_sys("Ошибка распределения памяти: ");
-    cell->count = 1;
-    memcpy(cell->word, word, strlen((char*) word));
-    printf("Создали ячейку, ");
+    
+
+
     return cell;    
 } 
 
 static void destroy_cell(cell_t** cell){
-    printf("Начали освобождать ячейку\n"); 
-    free((*cell)->word);
+    free((*cell)->key);
+    free((*cell)->value);
     free((*cell));
-    printf("Освободили ячейку\n"); 
 } 
 
 
-dict_t* create_dict(size_t size, float factor, float mult) {
+dict_t* create_dict(size_t size, float factor, float mult, val_type_t val_type) {
     
     dict_t *dict = (dict_t*) malloc(sizeof(dict_t));
     if (dict == NULL)
@@ -43,7 +39,7 @@ dict_t* create_dict(size_t size, float factor, float mult) {
          err_sys("Ошибка распределения памяти: ");
 
     dict->count = 0;
-    
+    dict->val_type = val_type;
     dict->factor = (factor >= DEFAULT_FACTOR && factor < 1.0f ) 
                     ? factor : DEFAULT_FACTOR;
     dict->limit = (size_t) (dict->factor * dict->size);
@@ -53,28 +49,23 @@ dict_t* create_dict(size_t size, float factor, float mult) {
 }
 
 void destroy_dict(dict_t* dict) {
-    printf("Начали освобождать массив данных\n"); 
     for (size_t i = 0; i < dict->size; i++)  {
         printf("адрес ячейки %lu - %p\n", i, (void*) dict->data[i]); 
         if (dict->data[i]) {
             destroy_cell(&(dict->data[i]));
         }
     }
-    printf("Освободили массив данных\n"); 
     free(dict->data);
-    printf("Освободили данные\n"); 
     free(dict);    
-    printf("Освободили словарь\n"); 
 }
 
 static void _put(dict_t** _dict, cell_t *cell) {
     dict_t *dict = *_dict;
-    unsigned long hash = hash_code(cell->word);
+    unsigned long hash = hash_code(cell->key);
     size_t index = hash % dict->size;
     if (dict->count < dict->limit) {
         if (dict->data[index] == NULL) {
             dict->data[index] = cell;
-            printf("Положили сразу - ");
         }
         else {
             while (dict->data[index] != NULL)  {
@@ -84,7 +75,6 @@ static void _put(dict_t** _dict, cell_t *cell) {
                 }
             }
             dict->data[index] = cell;
-            printf("Положили после поиска - ");
         }
         dict->count++;
     }
@@ -93,32 +83,31 @@ static void _put(dict_t** _dict, cell_t *cell) {
     }
 }
 
-void put(dict_t **_dict, alpha* word) {
+void put(dict_t **_dict, alpha* key, void* value) {
     dict_t *dict = *_dict;
 
-    cell_t* cell = get_data(dict, word);
+    
     if (cell != NULL) {
-        cell->count++;
         printf("Нашли\n");
     }
     else {
-        cell = create_cell(word);
+        cell = create_cell();
         printf("Не нашли, ");
         _put(_dict, cell);
     }
 }
 
-cell_t* get_data(dict_t *dict, alpha* word) {
-    unsigned long hash = hash_code(word);
+cell_t* get_data(dict_t *dict, alpha* key) {
+    unsigned long hash = hash_code(key);
     size_t index = hash % dict->size;
     cell_t* result = NULL;
     if (dict->data[index] != NULL)  {
-        if (CELL_CMP_EQ(dict->data[index]->word, word)) {
+        if (CELL_CMP_EQ(dict->data[index]->key, key)) {
             result = dict->data[index];
         }
         else {
             while(dict->data[index] != NULL || 
-                    !CELL_CMP_EQ(dict->data[index]->word, word)) {
+                    !CELL_CMP_EQ(dict->data[index]->key, key)) {
                 index++;
                 if (index >= dict->size) {
                     index = 0;
