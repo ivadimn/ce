@@ -1,209 +1,168 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <ctype.h>
+#include <unistd.h>
+
+
+#define BUF_SIZE 4096
+
+typedef union {
+    char ch_value;
+    int int_value;
+    long long_value;
+    float float_value;
+    double double_value;
+    unsigned char* str_value;
+} value_t;
 
 // auto - static
 typedef unsigned char alpha;
 typedef enum {CHAR, INT, LONG, FLOAT, DOUBLE, STR} val_type_t;
 
+void* alloc(size_t size) {
+    void *p = malloc(size);
+    if (p == NULL) {
+        printf("Ошибка распределения памяти: ");
+        exit(1);
+    }
+    return p;
+}
+
+long get_file_size(int fd) {
+
+	long fsize = 0;
+	struct stat fileStatbuff;
+	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
+		fsize = -1;
+	}
+	else{
+		fsize = fileStatbuff.st_size;
+	}
+	return fsize;
+}
+
+
 void transform(alpha* k, void* v, val_type_t val_type) {
     alpha* key;
-    void* value;
-    key = (alpha*) malloc(strlen((char*) k));
-    memcpy(key, k, strlen((char*) k));
-    switch (val_type)
+    value_t value;
+    size_t len = strlen((char*) k);
+    key = (alpha*) alloc(len + 1);
+    memcpy(key, k, len);
+    key[len] = '\0';
+
+    /*switch (val_type)
     {
     case CHAR:
-        value = (char*) malloc(sizeof(char));
+        value = (char*) alloc(sizeof(char));
         *((char*)value) = *((char*) v);
         break;
     case INT:
-        value = (int*) malloc(sizeof(int));
+        value = (int*) alloc(sizeof(int));
         *((int*)value) = *((int*) v);
         break;
     case LONG:
-        value = (long*) malloc(sizeof(long));
+        value = (long*) alloc(sizeof(long));
         *((long*)value) = *((long*) v);
         break; 
     case STR:
-        value = (alpha*) malloc(strlen((char*) v));
-        memcpy(value, v, strlen((char*) v));
+        value = (alpha*) alloc(strlen((char*) v));
+        strcpy(value, v);
+        break;           
+    default:
+        break;
+    }*/
+
+    switch (val_type)
+    {
+    case CHAR:
+        value.ch_value = *((char*) v);
+        break;
+    case INT:
+        value.int_value = *((int*) v);
+        break;
+    case LONG:
+        value.long_value = *((long*) v);
+        break; 
+    case STR:
+        value.str_value = (alpha*) alloc(strlen((char*) v));
+        strcpy(value.str_value, v);
         break;           
     default:
         break;
     }
 
-    printf("key = %s, val = %ld\n", key, *(long*)value);
+    int eq = memcmp(key, k, len);
+    printf("key = %s eq = %d, len = %lu\n", key, eq, len);
     free(key);
-    free(value);
+    
 }
 
-int main()
-{
-    //char* val = "any key";
-    long val = 14096;
-    alpha *key = "anyword";
-    transform(key, (void*) &val, LONG);
+void file_handle(char* filename) {
 
-}
-
-
-
-
-//int main()
-//{
-   // printf("c:\today\new\begin.txt ");
-
-   // int o = 020, h = 0x20, d = 20, b = 0b111;
-   // printf("dec = %d oct = %o hex = %x", d, d, d);
-
-
-   // printf("7 / 2 = %d \n", 7 / 2);
-   // printf("7 / 2 = %.3f \n", (float)7/2);
-   // printf("7 / 2 = %.2f \n", 7/2 + 0.);
-
-
-
-//  ++  --
-/*
-    int x = 5, y,z;
-
-    y = ++x;
-    z = x++;
-    printf("y = %d \n", y);
-    printf("z = %d \n", z);
-    printf("x = %d \n", x);
-*/
-
-
-
-//                  ������� ��������
-  //  int x = 3;                          //    11 -> 1 = 01    11 <- 1 = 110
- //   printf(" x >> 1 = %d \n x << 1 = %d \n  x = %d ", x>>1, x<<1, x);
-
-
-
-//��������� ����� �� ���������������
-   // printf("%d", ~(x - 1));
-
-// �������� �������� �����
-  /*
-    int b = 0b00000001;
-    if (x & b)
-        printf("%d is odd", x);
-    else
-        printf("%d is even", x);
-*/
-
-//}
-
-
-// �������
-/*
-#define sum_x_y(x, y) x + y
-#define max(x, y) (x > y ? x : y)
-#define autoinc(x, y)  \
-    (x)++;             \
-    (y)++;
-
-int main(){
-    int a = 5, b = 10, rez;
-  //  rez = sum_x_y(a,b)* 2;
-  //      printf("%d", rez);
-
-  //  rez = max(a, b++);
-  //      printf(" rez = %d \n b = %d", rez, b);
-
-    if (a > b)
-        autoinc(a, b);
-
-    printf("\n a = %d \n b = %d", a, b);
-}
-*/
-
-// ������ ���������� ��������������
-/*
-#define sum(max, out) {             \
-    int total = 0;                  \
-    for(int i = 0; i <= max; i++)   \
-       total += i;                  \
-     out = total;                   \
+    int fd;
+    long fsize, reading_size;
+    alpha *buffer;
+    alpha word[128];
+    size_t idx = 0;
+    long value = 1;
+        
+    fd = open(filename, O_RDONLY);
+    
+    if (fd == -1) {
+        printf("Ошибка открытия файла: %s\n", filename);
+        exit(1);
+    }    
+    
+    fsize = get_file_size(fd);
+    if (fsize == -1) {
+        printf("Ошибка при определении размера файла: %s\n", filename);
+        exit(1);
+    }
+    
+    printf("размер файла %ld\n", fsize);
+    if (fsize < BUF_SIZE) {
+        reading_size = fsize * sizeof(alpha);
+        buffer = (alpha*) alloc(reading_size);
+    }
+    else {
+        reading_size = BUF_SIZE * sizeof(alpha);
+        buffer = (alpha*) alloc(reading_size);
+    }
+    printf("размер чтения %lu, buffer %p\n", reading_size, (void*) buffer);
+    while ((reading_size = read(fd, buffer, reading_size)) > 0) {
+        
+        for (int i = 0; i < reading_size; i++) {
+            
+            if ((buffer[i] >> 7) & 0x01) {
+                word[idx++] = buffer[i];
+                continue;
+            }
+            if (isalpha(buffer[i]) || buffer[i] == '\'') {
+                word[idx++] = buffer[i];
+            }
+            else {
+                if (idx > 0)                 {
+                    word[idx] = '\0';
+                    printf("word:  %s\n", word);
+                    transform(word, &value, LONG);
+                    idx = 0;
+                }
+            }
         }
-
-int main() {
-    int out, total = 100;
-    sum(5, out);
-    printf("out = %d total = %d", out, total);
-
-}
-*/
-
-
-
-//      ���������
-
-/*
-void f_add(int *x, int *y){
-    *x = *x + 1;
-    *y = *y - 1;
+    }
+    free(buffer);
+    close(fd);
+    return;
 }
 
 int main()
 {
-    int x1 = 20, y1 = 5;
-    printf("Address x = %p", &x1);
-
-    f_add(&x1, &y1);
-    printf(" x1 = %d \n y1 = %d", x1, y1);
-
-
+    printf("открыли\n");
+    file_handle("utf12510.txt");
+    printf("открыли\n");
     return 0;
-}
-
-*/
-
-/*
-void set_el(int *a, int const *b){
-    a[0] = 3;
-}
-
-int main(){
-    int a[10];
-    int const *b = a;
-    for(int i = 0; i < 10; i++)
-        printf("%d ", a[i]);
-    printf("\n");
-    set_el(a, b);
-
-    for(int i = 0; i < 10; i++)
-        printf("%d ", b[i] );
 
 }
-*/
-
-
-
-// ���������� �����
-/*
-int main() {
-  int number = 11; // ����� ����� �������� ��� ��� ����� 11.
-  int count = number / 4; // ����� �������� ������������ �����.
-  int i = 0;
-
-  // ������� ������� �� ������� ������ ����� �������� �� ���������� ��������
-  // � ����� �������� ������������ ����� � ��������� ������� � ���� ��������
-  // ������ ���� ������������ �����.
-  switch (number % 4) {
-    case 0:
-      do {
-        ++i;
-    case 3: ++i; // <- ��� ������. ���������� ����� �������� ������ � ��� ������
-    case 2: ++i; // �������� ������������ ����� ����� ��������� �� ������, �
-    case 1: ++i; // ������ ��� �������� ��������� ����� (11 % 4 ��������).
-      } while (count-- > 0);
-  }
-
-  printf("%d ", i);
-}
-*/
-
