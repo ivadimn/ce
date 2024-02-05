@@ -1,11 +1,11 @@
 # depslib dependency file v1.0
-1707068469 source:/home/vadim/ce/dict1/main.c
+1707137882 source:/home/vadim/ce/dict1/main.c
 	"common.h"
 	"dict.h"
 	<fcntl.h>
 	<ctype.h>
 
-1706949310 /home/vadim/ce/dict1/common.h
+1707116197 /home/vadim/ce/dict1/common.h
 	<sys/stat.h>
 	<stdio.h>
 	<stdlib.h>
@@ -14,15 +14,15 @@
 	<unistd.h>
 	<stdint.h>
 
-1707068650 /home/vadim/ce/dict1/dict.h
+1707138400 /home/vadim/ce/dict1/dict.h
 
-1707033109 source:/home/vadim/ce/dict1/common.c
+1707116197 source:/home/vadim/ce/dict1/common.c
 	"common.h"
 	<errno.h>
 	<stdarg.h>
 	<stdint.h>
 
-1707068448 source:/home/vadim/ce/dict1/dict.c
+1707137673 source:/home/vadim/ce/dict1/dict.c
 	"common.h"
 	"dict.h"
 	<stdint.h>

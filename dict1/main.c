@@ -12,7 +12,7 @@ void file_handle(char* filename) {
     alpha word[128];
     size_t idx = 0;
     long count = 1;
-    void *value;
+    long *value, nc=0;
     dict_t *dict;
 
     fd = open(filename, O_RDONLY);
@@ -26,16 +26,12 @@ void file_handle(char* filename) {
 
     if (fsize < BUF_SIZE) {
         reading_size = fsize * sizeof(alpha);
-        buffer = (alpha*) malloc(reading_size);
+        buffer = (alpha*) alloc(reading_size);
     }
     else {
         reading_size = BUF_SIZE * sizeof(uint8_t);
-        buffer = (alpha*) malloc(reading_size);
+        buffer = (alpha*) alloc(reading_size);
     }
-
-
-    if (buffer == NULL)
-        err_sys("Ошибка распределения памяти.");
 
     dict = create_dict(256, 0.72f, 2.0f, LONG);
 
@@ -51,28 +47,22 @@ void file_handle(char* filename) {
             else {
                 if (idx > 0)                 {
                     word[idx] = '\0';
+                    value = (long*) get(dict, word);
 
-                    if (strcmp((char*)word, "новой") == 0) {
-                        printf("- %s\n", word);
-                    }
-
-                    value = get(dict, word);
-
-                    if (value == NULL)
+                    if (value == NULL) {
                         put(&dict, word, &count);
-                    else {
-                       (*((long*)value))++;
                     }
-                    if (strcmp((char*)word, "новой") == 0 && value != NULL) {
-                        printf("- %ld\n", *(long*)value);
+                    else {
+                       nc = *value += 1;
+                       put(&dict, word, &nc);
                     }
                     idx = 0;
                 }
             }
         }
     }
-    //printf("Количество вхождений слов в файл %s\n", filename);
-    //print_dict(dict);
+    printf("Количество вхождений слов в файл %s\n", filename);
+    print_dict(dict);
     destroy_dict(dict);
     free(buffer);
     close(fd);
@@ -83,7 +73,7 @@ int main(int argc, char** argv) {
 
     if (argc < 2)  {
         err_msg("Не достаточно аргументов!");
-        exit(1);
+        EXIT_FAILURE;
     }
     file_handle(argv[1]);
     return EXIT_SUCCESS;
