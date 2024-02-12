@@ -12,7 +12,6 @@ typedef struct  w_info_t {
 } w_info_t;
 
 void get_info();
-void json_object_print_type(json_object *obj, const char *key);
 
 
 #endif

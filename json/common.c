@@ -45,6 +45,19 @@ void err_msg(const char *fmt, ...) {
     va_end(ap);
 }
 
+/*
+* Обрабатывает фатальные ошибки, не связанные с системными вызовами
+* Выводит сообщение и возвращает управление
+*/
+void err_quit(const char *fmt, ...) {
+
+    va_list ap;
+
+    va_start(ap, fmt);
+    err_doit(0, 0, fmt, ap);
+    exit(1);
+}
+
 void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
 
     char buf[BUF_SIZE];
@@ -60,22 +73,3 @@ void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     fflush(NULL);
 }
 
-int64_t get_file_size(int fd) {
-
-	int64_t fsize = 0;
-	struct stat fileStatbuff;
-	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
-		fsize = -1;
-	}
-	else{
-		fsize = fileStatbuff.st_size;
-	}
-	return fsize;
-}
-
-void* alloc(size_t size) {
-    void *p = malloc(size);
-    if (p == NULL)
-        err_sys("Ошибка распределения памяти: ");
-    return p;
-}
