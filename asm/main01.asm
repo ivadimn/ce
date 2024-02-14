@@ -1,29 +1,30 @@
 format ELF64
 public _start
 
-section '.data' writeable
-    _buffer.size equ 32
-
-section '.bss' executable
-    _buffer rb _buffer.size
+;section '.data' writeable
+;    new_line equ 0xA
+;    msg db "Hello, world!", new_line, 0
+;    len = $ - msg
 
 section '.text' executable
 _start:
-   
-    mov rax, 571
-    mov rbx, _buffer
-    mov rcx, _buffer.size
-    call number_to_string
-    call print_string   ; вызываем функцию печати числа
+    mov rax, 0        ; помещаем в rax символ
+    call print_number
+    mov rax, '*'
+    call print_char
+    mov rax, 725
+    call print_number
+    mov rax, '='
+    call print_char
+    mov rax, 10
+    mov rbx, 725
+    mul rbx
+    call print_number   ; вызываем функцию печати числа
     call print_line     ; печатаем переводс строки
     call exit
 
-section '.number_to_string' executable
-; | input
-; | rax = number
-; | rbx = buffer     
-; | rcx = buffer.size
-number_to_string:
+section '.print_number' executable
+print_number:
     push rax
     push rbx
     push rcx
