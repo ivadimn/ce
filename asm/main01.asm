@@ -6,9 +6,12 @@ public _start
 ;    msg db "Hello, world!", new_line, 0
 ;    len = $ - msg
 
+section '.bss' writeable
+    bss_char rb 1
+
 section '.text' executable
 _start:
-    mov rax, 0        ; помещаем в rax символ
+    mov rax, 23        ; помещаем в rax символ
     call print_number
     mov rax, '*'
     call print_char
@@ -44,7 +47,7 @@ print_number:
         cmp rcx, 0
         je .close
         pop rax
-        call print_char
+        call print_char32
         dec rcx
         jmp .print_iter 
     .close:
@@ -54,6 +57,27 @@ print_number:
         pop rax
         ret
 
+section '.print_char32' executable
+; | input
+; rax = char
+print_char32:
+    push rax
+    push rbx
+    push rcx
+    push rdx
+
+    mov [bss_char], al
+
+    mov rax, 4
+    mov rbx, 1
+    mov rcx, bss_char
+    mov rdx, 1
+    int 0x80
+    pop rdx
+    pop rcx
+    pop rbx       
+    pop rax
+    ret
 
 
 section '.print_char' executable
@@ -75,13 +99,14 @@ print_char:
     pop rdx
     pop rcx
     pop rbx
+    
     ret
 
 section '.print_line' executable
 print_line:
     push rax
     mov rax, 0xA
-    call print_char
+    call print_char32
     pop rax
     ret
 

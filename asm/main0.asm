@@ -31,7 +31,7 @@ print_string:
     call length_string
     mov rdx, rax         ; длину строки в rdx
     mov rax, 4         ; указание ос что будет запись
-    mov rbx, 0         ; в стандартный поток вывода (терминал)
+    mov rbx, 1         ; в стандартный поток вывода (терминал)
     int 0x80
     pop rdx
     pop rcx
