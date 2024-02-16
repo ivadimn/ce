@@ -1,10 +1,10 @@
 format ELF64
 public _start
 
-;section '.data' writeable
-;    new_line equ 0xA
-;    msg db "Hello, world!", new_line, 0
-;    len = $ - msg
+section '.data' writeable
+    new_line equ 0xA
+    msg db "Hello, world!", new_line, 0
+    len = $ - msg
 
 section '.bss' writeable
     bss_char rb 1
@@ -47,7 +47,7 @@ print_number:
         cmp rcx, 0
         je .close
         pop rax
-        call print_char32
+        call print_char
         dec rcx
         jmp .print_iter 
     .close:
@@ -85,20 +85,22 @@ section '.print_char' executable
 ; rax = char
 print_char:
     
+    push rax
     push rbx
     push rcx
     push rdx
+    mov rax, 'W'        ;  дял 64 битного режима 
     push rax
-                      ;  дял 64 битного режима 
+    mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')                       
     mov rax, 1         ;  1 - write вместо 4 в 32 битном режиме 
     mov rdi, 1         ;  stdout = 1 в rdi вместо 0 в rbx в 32 битном режиме  
-    mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')    
-    mov rdx, 1         ;  в rdx кладётся длина
+    mov rdx, 1        ;  в rdx кладётся длина
     syscall
     pop rax
     pop rdx
     pop rcx
     pop rbx
+    pop rax
     
     ret
 

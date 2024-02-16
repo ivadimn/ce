@@ -4,7 +4,7 @@ public _start
 section '.data' writeable
     _buffer.size equ 32
 
-section '.bss' executable
+section '.bss' writeable
     _buffer rb _buffer.size
     _bss_char rb 1
 
@@ -15,6 +15,7 @@ _start:
     mov rbx, _buffer
     mov rcx, _buffer.size
     call number_to_string
+    mov rax, _buffer
     call print_string   ; вызываем функцию печати строки
     call print_line     ; печатаем переводс строки
     call exit
@@ -29,73 +30,95 @@ number_to_string:
     push rbx
     push rcx
     push rdx
+    push rsi
+    mov rsi, rcx
     xor rcx, rcx
-    mov rbx, 10
+    
     .next_iter:
+        push rbx
+        mov rbx, 10
         xor rdx, rdx        ; в rdx помещается остаток отделения    
-        div rbx             ; в div делимое всегда берётся из rax     
-        add rdx, '0'
-        push rdx
+        div rbx 
+        pop rbx                
+        add rdx, '0'         ; в div делимое всегда берётся из rax     
+        push rdx             ; сохраняем символ в стеке   
         inc rcx
         cmp rax, 0
-        je .print_iter
+        je .next_step
         jmp .next_iter
-    .print_iter:
-        cmp rcx, 0
+    .next_step:
+        mov rdx, rcx
+        xor rcx, rcx    
+    .to_string:
+        cmp rcx, rsi
+        je .pop_iter
+        cmp rcx, rdx
         je .close
         pop rax
-        call print_char
-        dec rcx
-        jmp .print_iter 
+        mov [rbx+rcx], rax
+        inc rcx
+        jmp .to_string
+    .pop_iter:
+        cmp rcx, rdx
+        je .close
+        pop rax
+        inc rcx
+        jmp .pop_iter
     .close:
+        pop rsi
         pop rdx
         pop rcx
         pop rbx       
         pop rax
         ret
 
-
-
-section '.print_char32' executable
+section '.print_char' executable
 ; | input
 ; rax = char
-print_char32:
-    push rax
-    push rbx
-    push rcx
+print_char:
+    
+    push rsi
+    push rdi
     push rdx
-
-    mov [bss_char], al
-
-    mov rax, 4
-    mov rbx, 1
-    mov rcx, bss_char
-    mov rdx, 1
-    int 0x80
-    pop rdx
-    pop rcx
-    pop rbx       
+    push rax
+                       ;  дял 64 битного режима 
+    mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')                       
+    mov rax, 1         ;  1 - write вместо 4 в 32 битном режиме 
+    mov rdi, 1         ;  stdout = 1 в rdi вместо 0 в rbx в 32 битном режиме  
+    mov rdx, 1        ;  в rdx кладётся длина
+    syscall
     pop rax
+    pop rdx
+    pop rdi
+    pop rsi
+    
     ret
 
+section '.print_line' executable
+print_line:
+    push rax
+    mov rax, 0xA
+    call print_char
+    pop rax
+    ret    
 
 section '.print_string' executable
 ; | input
 ; rax = адрес строки
 print_string:
     push rax
-    push rbx
-    push rcx
     push rdx
-    mov rcx, rax         ; адрес строки в rcx
+    push rdi
+    push rsi
+    mov rsi, rax         ; адрес строки в rcx
     call length_string
     mov rdx, rax         ; длину строки в rdx
-    mov rax, 4         ; указание ос что будет запись
-    mov rbx, 1         ; в стандартный поток вывода (терминал)
-    int 0x80
+    mov rax, 1         ; указание ос что будет запись
+    mov rdi, 1         ; в стандартный поток вывода (терминал)
+    syscall
+    pop rsi
+    pop rdi
     pop rdx
-    pop rcx
-    pop rbx
     pop rax
     ret
 
@@ -115,15 +138,7 @@ length_string:
     .close:
         mov rax, rdx    ; сохраняем длину строки в raz
         pop rdx         ; востанавливаем rdx    
-        ret    
-
-section '.print_line' executable
-print_line:
-    push rax
-    mov rax, 0xA
-    call print_char
-    pop rax
-    ret
+        ret
 
 section '.exit' executable
 exit:
