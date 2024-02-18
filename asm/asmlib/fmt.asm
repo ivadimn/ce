@@ -1,30 +1,11 @@
 format ELF64
-public _start
 
-section '.data' writeable
-    new_line equ 0xA
-    msg db "Hello, world!", new_line, 0
-    len = $ - msg
+public print_number
+public print_string
+public print_char
+public print_line
 
-section '.bss' writeable
-    bss_char rb 1
-
-section '.text' executable
-_start:
-    mov rax, 2300000        ; помещаем в rax символ
-    call print_number
-    mov rax, '*'
-    call print_char
-    mov rax, 725
-    call print_number
-    mov rax, '='
-    call print_char
-    mov rax, 10
-    mov rbx, 725
-    mul rbx
-    call print_number   ; вызываем функцию печати числа
-    call print_line     ; печатаем переводс строки
-    call exit
+extrn length_string
 
 section '.print_number' executable
 print_number:
@@ -59,28 +40,27 @@ print_number:
         pop rax
         ret
 
-section '.print_char32' executable
+
+section '.print_string' executable
 ; | input
-; rax = char
-print_char32:
+; rax = адрес строки
+print_string:
     push rax
-    push rbx
-    push rcx
     push rdx
-
-    mov [bss_char], al
-
-    mov rax, 4
-    mov rbx, 1
-    mov rcx, bss_char
-    mov rdx, 1
-    int 0x80
+    push rdi
+    push rsi
+    mov rsi, rax         ; адрес строки в rcx
+    call length_string
+    mov rdx, rax         ; длину строки в rdx
+    mov rax, 1         ; указание ос что будет запись
+    mov rdi, 1         ; в стандартный поток вывода (терминал)
+    syscall
+    call print_line
+    pop rsi
+    pop rdi
     pop rdx
-    pop rcx
-    pop rbx       
     pop rax
     ret
-
 
 section '.print_char' executable
 ; | input
@@ -109,12 +89,6 @@ section '.print_line' executable
 print_line:
     push rax
     mov rax, 0xA
-    call print_char32
+    call print_char
     pop rax
     ret
-
-section '.exit' executable
-exit:
-    mov rax, 1 ; - указание операционной системе что exit
-    mov rbx, 0 ; - возвращаемое программорй значание return (0 - ошибок нет)
-    int 0x80
