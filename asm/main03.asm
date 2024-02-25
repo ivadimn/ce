@@ -2,7 +2,7 @@ format ELF64
 public _start
 
 section '.data' writeable
-    strnum db "571", 0
+    strnum db "571738", 0
     _buffer.size equ 32
 
 section '.bss' writeable
@@ -13,17 +13,8 @@ section '.text' executable
 _start:
    
     mov rax, 571898928
-    ;call print_number
-    ;mov rax, strnum
-
-    mov rbx, _buffer
-    mov rcx, _buffer.size
-    ;mov rax, strnum
-    ;call string_to_number
-    call number_to_string
-    mov rax, _buffer
-    call print_string   ; вызываем функцию печати числа
-    call print_line     ; печатаем переводс строки
+    call print_number   ; вызываем функцию печати числа
+    ;call print_line     ; печатаем переводс строки
     call exit
     
 section '.string_to_number' executable
@@ -37,6 +28,7 @@ string_to_number:
     push rdx
     xor rcx, rcx
     xor rbx, rbx
+
     .next_iter:
         cmp [rax + rbx], byte 0
         je .next_step
@@ -52,12 +44,10 @@ string_to_number:
         cmp rbx, 0
         je .close
         pop rdx
-        
         imul rdx, rcx
         imul rcx, 10
         add rax, rdx
         dec rbx
-        ;call print_number
         jmp .to_number
     .close:
         pop rdx
@@ -121,15 +111,15 @@ number_to_string:
         ret
 
 section '.print_number' executable
-; | input
-; rax = number
 print_number:
     push rax
     push rbx
     push rcx
     push rdx
+
     xor rcx, rcx
     mov rbx, 10
+    
     .next_iter:
         xor rdx, rdx        ; в rdx помещается остаток отделения    
         div rbx             ; в div делимое всегда берётся из rax     
