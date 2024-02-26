@@ -12,10 +12,18 @@ section '.bss' writeable
 section '.text' executable
 _start:
    
-    mov rax, 321
+    mov rax, 2300000        ; помещаем в rax символ
+    call print_number
+    mov rax, '*'
+    call print_char
+    mov rax, 725
+    call print_number
+    mov rax, '='
+    call print_char
+    mov rax, 10
+    mov rbx, 725
+    mul rbx
     call print_number   ; вызываем функцию печати числа
-    mov rax, 'G'
-    call print_char   ; вызываем функцию печати числа
     call print_line     ; печатаем переводс строки
     call exit
 
@@ -59,26 +67,51 @@ section '.print_char' executable
 print_char:
     
     push rax
-    push rsi
-    push rdi
+    push rbx
+    push rcx
     push rdx
-    
+    push rdi
+    push rsi
     push rax
-                       ;  дял 64 битного режима 
+
     mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')                       
     mov rax, 1         ;  1 - write вместо 4 в 32 битном режиме 
-    mov rdx, 1         ;  stdout = 1 в rdx вместо 0 в rbx в 32 битном режиме  
-    mov rdi, 1        ;  в rd1 кладётся длина
+    mov rdi, 1         ;  stdout = 1 в rdi вместо 0 в rbx в 32 битном режиме  
+    mov rdx, 1        ;  в rdx кладётся длина
     syscall
 
     pop rax
-
-    pop rdx
-    pop rdi
     pop rsi
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
     pop rax
     
     ret
+section '.print_char32' executable
+; | input
+; rax = char
+print_char32:
+    push rax
+    push rbx
+    push rcx
+    push rdx
+
+    mov [_bss_char], al
+
+    mov rax, 4
+    mov rbx, 1
+    mov rcx, _bss_char
+    mov rdx, 1
+    int 0x80
+    pop rdx
+    pop rcx
+    pop rbx       
+    pop rax
+    ret
+
+
 
 section '.print_line' executable
 print_line:

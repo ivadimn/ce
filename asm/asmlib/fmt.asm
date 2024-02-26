@@ -71,13 +71,19 @@ print_char:
     push rbx
     push rcx
     push rdx
+    push rdi
+    push rsi
     push rax
+
     mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')                       
     mov rax, 1         ;  1 - write вместо 4 в 32 битном режиме 
     mov rdi, 1         ;  stdout = 1 в rdi вместо 0 в rbx в 32 битном режиме  
     mov rdx, 1        ;  в rdx кладётся длина
     syscall
+
     pop rax
+    pop rsi
+    pop rdi
     pop rdx
     pop rcx
     pop rbx
