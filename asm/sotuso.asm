@@ -5,6 +5,7 @@ global main
 
 section   .data
 empty_str: db 0x0
+debug_str: db "debug", 0xA, 0x0
 int_format: db "%ld ", 0x0
 data: dq 4, 8, 15, 16, 23, 42
 data_length: equ ($-data) / 8
@@ -69,32 +70,36 @@ m:
     mov rbp, rsp
     sub rsp, 16
 
-    ;test rdi, rdi
-    ;jz outm
-
-    push rbp
     push rbx
-    push rcx
-    mov rcx, data_len 
+    push r12
+    push rax
+    
+    test rdi, rdi
+    jz outm
+    
+    mov r12, data_length 
 print_loop:
+    cmp r12, 0
+    je outm
     mov rbx, rdi
-    ;mov rbp, rsi
-
+    
     mov rdi, [rdi]
     call print_int
 
     mov rdi, [rbx + 8]
-    mov rsi, rbp
-    call m
-
-    pop rcx
-    pop rbx
-    pop rbp
+    dec r12
+    jmp print_loop
+    
 
 outm:
+    pop rax
+    pop r12
+    pop rbx
+        
     mov rsp, rbp
     pop rbp
     ret
+
 ;;; f proc
 f:
     mov rax, rsi
@@ -151,12 +156,10 @@ adding_loop:
     jnz adding_loop
 
     mov rbx, rax
-
     mov rdi, rax
-    mov rsi, print_int
     call m
 
-    mov rdi, empty_str
+    mov rdi, debug_str
     call puts
 
     mov rdx, p
@@ -164,12 +167,12 @@ adding_loop:
     mov rdi, rbx
     call f
 
-    mov rdi, rax
-    mov rsi, print_int
-    call m
+    ;mov rdi, rax
+    ;mov rsi, print_int
+    ;call m
 
-    mov rdi, empty_str
-    call puts
+    ;mov rdi, debug_str
+    ;call puts
 
     pop rbx
 
