@@ -5,7 +5,7 @@ public print_string
 public print_char
 public print_line
 
-extrn length_string
+include "str.inc"
 
 section '.print_number' executable
 print_number:
@@ -55,7 +55,7 @@ print_string:
     mov rax, 1         ; указание ос что будет запись
     mov rdi, 1         ; в стандартный поток вывода (терминал)
     syscall
-    call print_line
+    ;call print_line
     pop rsi
     pop rdi
     pop rdx
@@ -71,8 +71,6 @@ print_char:
     push rbx
     push rcx
     push rdx
-    push rdi
-    push rsi
     push rax
 
     mov rsi, rsp       ;  rsp указывает на последнее значение в стеке т.е. на RAX ('W')                       
@@ -80,15 +78,13 @@ print_char:
     mov rdi, 1         ;  stdout = 1 в rdi вместо 0 в rbx в 32 битном режиме  
     mov rdx, 1        ;  в rdx кладётся длина
     syscall
-
+    
     pop rax
-    pop rsi
-    pop rdi
     pop rdx
     pop rcx
     pop rbx
     pop rax
-    
+           
     ret
 
 section '.print_line' executable

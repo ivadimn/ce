@@ -46,11 +46,11 @@ void err_msg(const char *fmt, ...) {
 
 void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     
-    char buf[BUF_SIZE];
+    char buf[MAXLINE];
 
-    vsnprintf(buf, BUF_SIZE-1, fmt, ap);
+    vsnprintf(buf, MAXLINE-1, fmt, ap);
     if (errnoflag)     {
-        snprintf(buf + strlen(buf), BUF_SIZE - strlen(buf) - 1, ": %s",
+        snprintf(buf + strlen(buf), MAXLINE - strlen(buf) - 1, ": %s",
                 strerror(error));
     }
     strcat(buf, "\n");
@@ -59,16 +59,12 @@ void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
     fflush(NULL);
 }
 
-int64_t getFileSize(int fd) {
-    
-	int64_t fsize = 0;
-	struct stat fileStatbuff;
-	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
-		fsize = -1;
-	}
-	else{
-		fsize = fileStatbuff.st_size;
-        
-	}
-	return fsize;
+int readf(int fd, void* buf, unsigned len) {
+    int result = 0;
+    result = read(fd, buf, len);
+    if (result == -1) {
+        err_sys("Ошибка чтения файла: ");
+    }
+    return result;
+
 }

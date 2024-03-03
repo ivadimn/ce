@@ -1,16 +1,13 @@
 bits 64
-extern malloc, puts, printf, fflush, abort
+extern malloc, puts, printf, fflush, abort, free
 global main
 
 
 section   .data
 empty_str: db 0x0
-debug_str: db "debug", 0xA, 0x0
 int_format: db "%ld ", 0x0
 data: dq 4, 8, 15, 16, 23, 42
 data_length: equ ($-data) / 8
-
-
 
 
 section .text
@@ -18,8 +15,10 @@ section .text
 ;;; print_int proc
 print_int:
     push rbp
-    mov rbp, rsp
-    sub rsp, 16
+      
+    push rax
+    push rdi
+    push rsi
 
     mov rsi, rdi
     mov rdi, int_format
@@ -29,7 +28,9 @@ print_int:
     xor rdi, rdi
     call fflush
 
-    mov rsp, rbp
+    pop rsi
+    pop rdi
+    pop rax
     pop rbp
     ret
 
@@ -44,6 +45,7 @@ add_element:
     push rbp
     push rbx
     push r14
+        
     mov rbp, rsp
     sub rsp, 16
 
@@ -67,36 +69,25 @@ add_element:
 ;;; m proc
 m:
     push rbp
-    mov rbp, rsp
-    sub rsp, 16
-
+    push rax
     push rbx
     push r12
-    push rax
     
+print_loop:
     test rdi, rdi
     jz outm
-    
-    mov r12, data_length 
-print_loop:
-    cmp r12, 0
-    je outm
     mov rbx, rdi
     
     mov rdi, [rdi]
     call print_int
 
     mov rdi, [rbx + 8]
-    dec r12
     jmp print_loop
-    
 
 outm:
-    pop rax
     pop r12
     pop rbx
-        
-    mov rsp, rbp
+    pop rax        
     pop rbp
     ret
 
@@ -104,43 +95,70 @@ outm:
 f:
     mov rax, rsi
 
-    test rdi, rdi
-    jz outf
-
     push rbx
     push r12
     push r13
-
+    
+add_loop:
+    
+    test rdi, rdi
+    jz outf
+        
     mov rbx, rdi
     mov r12, rsi
-    mov r13, rdx
-
+    
     mov rdi, [rdi]
-    call rdx
+    call p
     test rax, rax
     jz z
-
+    
     mov rdi, [rbx]
     mov rsi, r12
     call add_element
     mov rsi, rax
     jmp ff
-
+    
 z:
     mov rsi, r12
-
+    
 ff:
     mov rdi, [rbx + 8]
-    mov rdx, r13
-    call f
-
+    jmp add_loop;
+    
+outf:
     pop r13
     pop r12
     pop rbx
-
-outf:
     ret
 
+;;; proc
+mem_free:
+    push rbp
+    
+    mov rbp, rsp
+       
+    push rax
+    push rdi
+    push rbx
+    push rsi
+    
+    test rdi, rdi   
+    jz outmf
+    mov rbx, rdi
+    mov rdi, [rdi + 8]
+    mov rsi, rbp
+    call mem_free
+    mov rdi, [rbx]
+    call print_int
+            
+outmf:
+    pop rsi
+    pop rbx
+    pop rdi
+    pop rax
+    pop rbp
+    ret              
+    
 
 main:
     mov rbp, rsp; for correct debugging
@@ -154,25 +172,30 @@ adding_loop:
     call add_element
     dec rbx
     jnz adding_loop
-
+        
     mov rbx, rax
     mov rdi, rax
     call m
-
-    mov rdi, debug_str
+    
+    
+    mov rdi, empty_str
     call puts
 
-    mov rdx, p
     xor rsi, rsi
     mov rdi, rbx
     call f
 
-    ;mov rdi, rax
-    ;mov rsi, print_int
-    ;call m
+    mov r14, rsi
+    mov rdi, rsi
+    mov rbx, rsi
+    call m
 
-    ;mov rdi, debug_str
-    ;call puts
+
+    mov rdi, empty_str
+    call puts
+                                              
+    mov rdi, r14
+    call mem_free
 
     pop rbx
 
