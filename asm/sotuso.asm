@@ -131,10 +131,9 @@ outf:
     pop rbx
     ret
 
-;;; proc
+;;; mem_free
 mem_free:
     push rbp
-    
     mov rbp, rsp
        
     push rax
@@ -142,23 +141,21 @@ mem_free:
     push rbx
     push rsi
     
+.next_iter:
     test rdi, rdi   
-    jz outmf
-    mov rbx, rdi
-    mov rdi, [rdi + 8]
-    mov rsi, rbp
-    call mem_free
-    mov rdi, [rbx]
-    call print_int
-            
-outmf:
+    jz .outmf1
+    mov rbx, [rdi + 8]
+    call free
+    mov rdi, rbx
+    jmp .next_iter        
+.outmf1:
     pop rsi
     pop rbx
     pop rdi
     pop rax
     pop rbp
     ret              
-    
+        
 
 main:
     mov rbp, rsp; for correct debugging
@@ -173,6 +170,7 @@ adding_loop:
     dec rbx
     jnz adding_loop
         
+    mov r14, rax
     mov rbx, rax
     mov rdi, rax
     call m
@@ -185,7 +183,6 @@ adding_loop:
     mov rdi, rbx
     call f
 
-    mov r14, rsi
     mov rdi, rsi
     mov rbx, rsi
     call m
@@ -195,6 +192,9 @@ adding_loop:
     call puts
                                               
     mov rdi, r14
+    call mem_free
+    
+    mov rdi, rbx
     call mem_free
 
     pop rbx

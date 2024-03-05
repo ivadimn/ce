@@ -35,9 +35,10 @@ void get_file_info(const char* file, file_info_t* finfo) {
 }
 
 
-void dirwalk( char *dir,void (*fcn)(char *)){
+void dirwalk( char *dir, void (*fcn)(char *)){
 
     char name[MAX_PATH];
+    char tabs[16] = {0}; 
     struct dirent *dp;
     DIR *dfd;
 
@@ -61,7 +62,8 @@ void dirwalk( char *dir,void (*fcn)(char *)){
             // Call fsize
             (*fcn)(name);
         }*/
-        printf("%s/   %s\n",dir,dp->d_name);
+        //printf("%s/   %s\n",dir,dp->d_name);
+        printf("%s%s\n", tabs, dp->d_name);
     }
     closedir(dfd);
 }
@@ -91,6 +93,6 @@ int main(int argc,char *argv[]){
         fsize("/home/vadim");
     else 
         while(--argc>0)
-            fsize(*++argv);
+            dirwalk(*++argv, fsize);
     return 0;
 }
