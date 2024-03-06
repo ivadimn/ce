@@ -61,20 +61,22 @@ void dirwalk( char *dir, int tc){
         puts("Error: Cannot open Directory");
         return;
     }
-    
-    for (size_t i = 0; i < tabc; i++) {
+    size_t i = 0;
+    for (; i < tabc; i++) {
         tabs[i] = '\t';
     }
+    tabs[i] = '\0';
     
-    puts(dir);
+    //puts(dir);
+    printf("%s%s\n", tabs, finfo.name);
     // Get each dir entry
     while((dp=readdir(dfd)) != NULL){
         // Skip . and .. is redundant.
         
-        /*if(strcmp(dp->d_name,".") == 0
+        if(strcmp(dp->d_name,".") == 0
             || strcmp(dp->d_name,"..") ==0 )
             continue;
-        if(strlen(dir)+strlen(dp->d_name)+2 > sizeof(name))
+        /*if(strlen(dir)+strlen(dp->d_name)+2 > sizeof(name))
             puts("Error: Name too long!");
         else{
             sprintf(name,"%s/%s",dir,dp->d_name);
@@ -84,7 +86,11 @@ void dirwalk( char *dir, int tc){
         sprintf(name,"%s/%s",dir,dp->d_name);
         //printf("%s/   %s\n",dir,dp->d_name);
         get_file_info(name, &finfo);
-        printf("%s%s %ld %d\n", tabs, finfo.name, finfo.size, finfo.type);
+        if(finfo.type == TYPE_DIR)
+            dirwalk(name, tc + 1);
+        else {    
+            printf("%s%s %ld %d\n", tabs, dp->d_name, finfo.size, finfo.type);
+        }
     }
     closedir(dfd);
 }
@@ -99,7 +105,7 @@ void fsize(char *name){
     }
 
     if((stbuf.st_mode & S_IFMT) == S_IFDIR){
-        dirwalk(name,fsize);
+        dirwalk(name,0);
     }
     struct passwd *pwd = getpwuid(stbuf.st_uid);
     //print file name,size and owner
@@ -109,7 +115,7 @@ void fsize(char *name){
 int main(int argc,char *argv[]){
 
     if(argc==1)
-        fsize("/home/vadim");
+        dirwalk("/home/vadim/ce", 0);
     else 
         while(--argc>0)
             dirwalk(*++argv, 0);
