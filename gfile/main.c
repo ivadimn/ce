@@ -5,13 +5,10 @@
 /*
    Modify the fsize program to print the other information contained in the inode entry.
    */
-
-#include <stdio.h>
-#include <string.h>
+#include "common.h"
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <pwd.h>
 
@@ -22,7 +19,7 @@
 #define DIRSIZ 14
 #endif
 
-typedef enum {TYPE_DIR, TYPE_FILE} file_t;
+typedef enum {TYPE_NONE, TYPE_DIR, TYPE_FILE} file_t;
 
 typedef struct file_info_t {
     char name[MAX_PATH];
@@ -31,20 +28,42 @@ typedef struct file_info_t {
 } file_info_t;
 
 void get_file_info(const char* file, file_info_t* finfo) {
-
+    struct stat stat_buff;
+    int result = stat(file, &stat_buff);
+    if (result == -1) {
+        err_cont("Error while getting file info %s", file);
+        finfo->type = TYPE_NONE;
+        return;
+    }
+    strcpy(finfo->name, file);
+    if (S_ISDIR(stat_buff.st_mode)) {
+        finfo->type = TYPE_DIR;
+        finfo->size = 0;
+    }
+    else {
+        finfo->type = TYPE_FILE;
+        finfo->size = stat_buff.st_size;
+    }
+    return;
 }
 
 
-void dirwalk( char *dir, void (*fcn)(char *)){
+void dirwalk( char *dir, int tc){
 
     char name[MAX_PATH];
     char tabs[16] = {0}; 
+    int tabc = tc;
+    file_info_t finfo;
     struct dirent *dp;
     DIR *dfd;
 
     if((dfd = opendir(dir))==NULL){
         puts("Error: Cannot open Directory");
         return;
+    }
+    
+    for (size_t i = 0; i < tabc; i++) {
+        tabs[i] = '\t';
     }
     
     puts(dir);
@@ -62,13 +81,13 @@ void dirwalk( char *dir, void (*fcn)(char *)){
             // Call fsize
             (*fcn)(name);
         }*/
+        sprintf(name,"%s/%s",dir,dp->d_name);
         //printf("%s/   %s\n",dir,dp->d_name);
-        printf("%s%s\n", tabs, dp->d_name);
+        get_file_info(name, &finfo);
+        printf("%s%s %ld %d\n", tabs, finfo.name, finfo.size, finfo.type);
     }
     closedir(dfd);
 }
-
-
 
 
 void fsize(char *name){
@@ -93,6 +112,6 @@ int main(int argc,char *argv[]){
         fsize("/home/vadim");
     else 
         while(--argc>0)
-            dirwalk(*++argv, fsize);
+            dirwalk(*++argv, 0);
     return 0;
 }

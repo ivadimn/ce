@@ -1,1 +1,1 @@
-gcc main.c -o main
+gcc main.c common.c -o main
