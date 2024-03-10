@@ -1,123 +1,56 @@
-/* these defines at beginning to highlight them */
-//#define S_IFMT 0160000 /* type of file: */
-//#define S_IFDIR 0040000 /* directory */
-
-/*
-   Modify the fsize program to print the other information contained in the inode entry.
-   */
 #include "common.h"
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pwd.h>
+#include "file_info.h"
+#include <gtk/gtk.h>
 
-
-#define MAX_PATH 1024
-
-#ifndef DIRSIZ
-#define DIRSIZ 14
-#endif
-
-typedef enum {TYPE_NONE, TYPE_DIR, TYPE_FILE} file_t;
-
-typedef struct file_info_t {
-    char name[MAX_PATH];
-    size_t size;
-    file_t type;
-} file_info_t;
-
-void get_file_info(const char* file, file_info_t* finfo) {
-    struct stat stat_buff;
-    int result = stat(file, &stat_buff);
-    if (result == -1) {
-        err_cont("Error while getting file info %s", file);
-        finfo->type = TYPE_NONE;
-        return;
-    }
-    strcpy(finfo->name, file);
-    if (S_ISDIR(stat_buff.st_mode)) {
-        finfo->type = TYPE_DIR;
-        finfo->size = 0;
-    }
-    else {
-        finfo->type = TYPE_FILE;
-        finfo->size = stat_buff.st_size;
-    }
-    return;
+static void print_hello(GtkApplication *app, gpointer data) {
+    g_print("Hello World\n");
 }
 
-
-void dirwalk( char *dir, int tc){
-
-    char name[MAX_PATH];
-    char tabs[16] = {0}; 
-    int tabc = tc;
-    file_info_t finfo;
-    struct dirent *dp;
-    DIR *dfd;
-
-    if((dfd = opendir(dir))==NULL){
-        puts("Error: Cannot open Directory");
-        return;
-    }
-    size_t i = 0;
-    for (; i < tabc; i++) {
-        tabs[i] = '\t';
-    }
-    tabs[i] = '\0';
-    
-    //puts(dir);
-    printf("%s%s\n", tabs, finfo.name);
-    // Get each dir entry
-    while((dp=readdir(dfd)) != NULL){
-        // Skip . and .. is redundant.
-        
-        if(strcmp(dp->d_name,".") == 0
-            || strcmp(dp->d_name,"..") ==0 )
-            continue;
-        /*if(strlen(dir)+strlen(dp->d_name)+2 > sizeof(name))
-            puts("Error: Name too long!");
-        else{
-            sprintf(name,"%s/%s",dir,dp->d_name);
-            // Call fsize
-            (*fcn)(name);
-        }*/
-        sprintf(name,"%s/%s",dir,dp->d_name);
-        //printf("%s/   %s\n",dir,dp->d_name);
-        get_file_info(name, &finfo);
-        if(finfo.type == TYPE_DIR)
-            dirwalk(name, tc + 1);
-        else {    
-            printf("%s%s %ld %d\n", tabs, dp->d_name, finfo.size, finfo.type);
-        }
-    }
-    closedir(dfd);
+static void quit_cb(GtkWindow *window) {
+    gtk_window_close(window);
 }
 
+static void activate (GtkApplication* app, gpointer user_data)   {
 
-void fsize(char *name){
-    struct stat stbuf;
+  //создаём билдер и загружаем UI описание
+  GtkBuilder *builder = gtk_builder_new();
+  gtk_builder_add_from_file(builder, "builder.xml", NULL);
 
-    if(stat(name,&stbuf) == -1){
-        puts("Error: Cannot get file stats!");
-        return;
-    }
+ //создаём главное окно  
+  GObject *window = gtk_builder_get_object(builder, "window");
+  gtk_window_set_application(GTK_WINDOW (window), app);
 
-    if((stbuf.st_mode & S_IFMT) == S_IFDIR){
-        dirwalk(name,0);
-    }
-    struct passwd *pwd = getpwuid(stbuf.st_uid);
-    //print file name,size and owner
-    printf("%1d %s Owner: %s\n",(int)stbuf.st_size,name,pwd->pw_name);
+  GObject* button = gtk_builder_get_object(builder, "button1");
+  g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
+  
+  button = gtk_builder_get_object(builder, "button2");
+  g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
+  
+  button = gtk_builder_get_object(builder, "quit");
+  g_signal_connect_swapped(button, "clicked", G_CALLBACK(quit_cb), window);
+
+  gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+
+  g_object_unref(builder);
+
 }
+
 
 int main(int argc,char *argv[]){
 
-    if(argc==1)
-        dirwalk("/home/vadim/ce", 0);
-    else 
-        while(--argc>0)
-            dirwalk(*++argv, 0);
-    return 0;
+    //dir_list("/home/vadim/ci", 0);
+  GtkApplication *app;
+  int status;
+  #ifdef GTK_SRCDIR
+    g_chdir(GTK_SRCDIR)
+  #endif
+
+  app = gtk_application_new("org.gtk.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect(app, "activate", G_CALLBACK (activate), NULL);
+  status = g_application_run(G_APPLICATION (app), argc, argv);
+  printf("Status %d\n", status);
+  g_object_unref(app);
+
+  return status;
+
 }
