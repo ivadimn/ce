@@ -17,7 +17,8 @@ typedef struct file_info_t {
 } file_info_t;
 
 void file_info(file_info_t* finfo);
-file_info_t* create_file_list( char *dir);
+void get_file_list(file_info_t* dir);
+file_info_t* create_dir( char *dir);
 
 
 #endif

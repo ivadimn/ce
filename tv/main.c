@@ -1,5 +1,7 @@
-#include 
+#include "file_info.h"
 #include <gtk/gtk.h>
+
+static GtkWidget *window = NULL;
 
 enum
 {
@@ -9,10 +11,12 @@ enum
    N_COLUMNS
 };
 
-static void refresh_tree_model(GtkTreeStore *store) {
+static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir) {
 
   GtkTreeIter iter1;
   GtkTreeIter iter2;
+
+  gtk_window_set_title (GTK_WINDOW (window), dir->full_name);
 
   gtk_tree_store_append(store, &iter1, NULL);
   gtk_tree_store_set(store, &iter1,
@@ -35,7 +39,7 @@ static void refresh_tree_model(GtkTreeStore *store) {
                       -1);                                      
 }
 
-static GtkWidget* init_tree(void) {
+static GtkWidget* init_tree(file_info_t* dir) {
   GtkTreeStore *store;
   GtkWidget *tree;
   GtkTreeViewColumn *column;
@@ -47,7 +51,7 @@ static GtkWidget* init_tree(void) {
                               G_TYPE_BOOLEAN
                               );
 
-  refresh_tree_model(store);
+  refresh_tree_model(store, dir);
 
   tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 
@@ -78,14 +82,18 @@ static GtkWidget* init_tree(void) {
 
 static void activate (GtkApplication* app, gpointer user_data)   {
 
-  GtkWidget *window;
   GtkWidget *tree;
+  file_info_t* dir;
+  char cur_dir[MAX_NAME];
+
   //создаём главное окно  
   window = gtk_application_window_new (app);
-  gtk_window_set_title (GTK_WINDOW (window), "Tree View");
+  gtk_window_set_title (GTK_WINDOW (window), "...");
   gtk_window_set_default_size (GTK_WINDOW (window), 600, 400);
 
-  tree = init_tree();
+  getcwd(cur_dir, MAX_NAME - 1);
+  dir = create_dir(cur_dir);
+  tree = init_tree(dir);
   gtk_window_set_child(GTK_WINDOW(window), tree);
 
   gtk_window_present (GTK_WINDOW (window));

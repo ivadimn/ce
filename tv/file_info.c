@@ -25,16 +25,22 @@ void get_file_info(file_info_t* finfo) {
     return;
 }
 
-file_info_t* create_file_list( char *dir) {
+void get_file_list(file_info_t *dir) {
 
     char name[MAX_PATH];
     file_info_t finfo;
     struct dirent *dp;
     DIR *dfd;
+    size_t index = 0;
 
     if((dfd = opendir(dir))==NULL){
         err_cont("Error open dir: %s", dir);
         return NULL;
+    }
+
+    dir->flist = (file_info_t*) malloc(sizeof(file_info_t) * dir->size);
+    if (dir->flist == NULL) {
+        err_sys("Ошибка выделения памяти!");
     }
     
     while((dp=readdir(dfd)) != NULL){
@@ -42,16 +48,45 @@ file_info_t* create_file_list( char *dir) {
         if(strcmp(dp->d_name,".") == 0
             || strcmp(dp->d_name,"..") ==0 )
             continue;
-        
         sprintf(name,"%s/%s",dir,dp->d_name);
-        get_file_info(name, &finfo);
-        if(finfo.type == TYPE_DIR) {
-            printf("%s\n", dp->d_name);
-            dir_list(name);
-        }
-        else {    
-            printf("%s %ld %d\n", dp->d_name, finfo.size, finfo.type);
-        }
+        strcpy(dir->flist[index].name, dp->d_name);
+        strcpy(dir->flist[index].full_name, name);        
+        get_file_info(&dir->flist[index]);
+        index++;
     }
     closedir(dfd);
+}
+
+file_info_t* create_dir( char *dir) {
+
+    char name[MAX_PATH];
+    file_info_t *finfo = NULL;
+    struct dirent *dp = NULL;
+    DIR *dfd = NULL;
+    size_t count = 0;
+
+    if((dfd = opendir(dir))==NULL){
+        err_cont("Ошибка открытия каталога: %s", dir);
+        return NULL;
+    }
+
+    finfo = (file_info_t*) malloc(sizeof(file_info_t));
+    if (finfo == NULL) {
+        err_sys("Ошибка выделения памяти!");
+    }
+    finfo->type = TYPE_DIR;
+    strcpy(finfo->name, dir);
+    strcpy(finfo->full_name, dir);
+    finfo->flist = NULL;
+    
+    while((dp=readdir(dfd)) != NULL){
+        
+        if(strcmp(dp->d_name,".") == 0
+            || strcmp(dp->d_name,"..") ==0 )
+            continue;
+        count++;    
+    }
+    finfo->size = count;
+    closedir(dfd);
+    return finfo;
 }
