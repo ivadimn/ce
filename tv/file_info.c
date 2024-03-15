@@ -33,9 +33,9 @@ void get_file_list(file_info_t *dir) {
     DIR *dfd;
     size_t index = 0;
 
-    if((dfd = opendir(dir))==NULL){
+    if((dfd = opendir(dir->name))==NULL) {
         err_cont("Error open dir: %s", dir);
-        return NULL;
+        return;
     }
 
     dir->flist = (file_info_t*) malloc(sizeof(file_info_t) * dir->size);
@@ -48,7 +48,8 @@ void get_file_list(file_info_t *dir) {
         if(strcmp(dp->d_name,".") == 0
             || strcmp(dp->d_name,"..") ==0 )
             continue;
-        sprintf(name,"%s/%s",dir,dp->d_name);
+        sprintf(name,"%s/%s",dir->name,dp->d_name);
+        printf("%s\n", name);
         strcpy(dir->flist[index].name, dp->d_name);
         strcpy(dir->flist[index].full_name, name);        
         get_file_info(&dir->flist[index]);

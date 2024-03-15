@@ -5,9 +5,8 @@ static GtkWidget *window = NULL;
 
 enum
 {
-   TITLE_COLUMN,
-   AUTHOR_COLUMN,
-   CHECKED_COLUMN,
+   NAME_COLUMN,
+   SIZE_COLUMN,
    N_COLUMNS
 };
 
@@ -18,13 +17,20 @@ static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir) {
 
   gtk_window_set_title (GTK_WINDOW (window), dir->full_name);
 
-  gtk_tree_store_append(store, &iter1, NULL);
-  gtk_tree_store_set(store, &iter1,
-                      TITLE_COLUMN, "The Art of Computer Programming",
-                      AUTHOR_COLUMN, "Donald E. Knuth",
-                      CHECKED_COLUMN, FALSE, -1);
+  get_file_list(dir);
 
-  gtk_tree_store_append(store, &iter2, &iter1);  
+  printf(" - %ld\n", dir->size);
+
+  
+  for (size_t i = 0; i < dir->size; i++) {
+    printf(" - %s\n", dir->flist[i].name);
+    gtk_tree_store_append(store, &iter1, NULL);
+    gtk_tree_store_set(store, &iter1,
+                      NAME_COLUMN, dir->flist[i].name,
+                      SIZE_COLUMN, dir->flist[i].size, -1);
+  }
+
+  /*gtk_tree_store_append(store, &iter2, &iter1);  
   gtk_tree_store_set(store, &iter2,
                       TITLE_COLUMN, "Volumn 1: Fundamental Algorithms",
                       -1);                  
@@ -36,7 +42,7 @@ static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir) {
   gtk_tree_store_append(store, &iter2, &iter1);  
   gtk_tree_store_set(store, &iter2,
                       TITLE_COLUMN, "Volumn 3: Sorting and Searching",
-                      -1);                                      
+                      -1); */
 }
 
 static GtkWidget* init_tree(file_info_t* dir) {
@@ -47,8 +53,7 @@ static GtkWidget* init_tree(file_info_t* dir) {
 
   store = gtk_tree_store_new(N_COLUMNS, 
                               G_TYPE_STRING,
-                              G_TYPE_STRING,
-                              G_TYPE_BOOLEAN
+                              G_TYPE_ULONG
                               );
 
   refresh_tree_model(store, dir);
@@ -57,23 +62,24 @@ static GtkWidget* init_tree(file_info_t* dir) {
 
   g_object_unref(G_OBJECT(store));
   renderer = gtk_cell_renderer_text_new();
-  g_object_set(G_OBJECT(renderer), "foreground", "red", NULL);
+  //g_object_set(G_OBJECT(renderer), "foreground", "red", NULL);
 
-  column = gtk_tree_view_column_new_with_attributes("Author", renderer, 
-                                                    "text", AUTHOR_COLUMN, NULL);
-
-  gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-
-  column = gtk_tree_view_column_new_with_attributes("Title", renderer, 
-                                                    "text", TITLE_COLUMN, NULL);
+  column = gtk_tree_view_column_new_with_attributes("File name", renderer, 
+                                                    "text", NAME_COLUMN, NULL);
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-  renderer = gtk_cell_renderer_toggle_new();
 
-  column = gtk_tree_view_column_new_with_attributes("Checked out", renderer, 
-                                                    "active", CHECKED_COLUMN, NULL);
+  //renderer = gtk_cell_renderer_int_new();
+  column = gtk_tree_view_column_new_with_attributes("Size", renderer, 
+                                                    "text", SIZE_COLUMN, NULL);
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+  //renderer = gtk_cell_renderer_toggle_new();
+
+  //column = gtk_tree_view_column_new_with_attributes("Checked out", renderer, 
+                                                    //"active", CHECKED_COLUMN, NULL);
+
+  //gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
 
   return tree;
 
