@@ -62,25 +62,15 @@ static GtkWidget* init_tree(file_info_t* dir) {
 
   g_object_unref(G_OBJECT(store));
   renderer = gtk_cell_renderer_text_new();
-  //g_object_set(G_OBJECT(renderer), "foreground", "red", NULL);
-
+  
   column = gtk_tree_view_column_new_with_attributes("File name", renderer, 
                                                     "text", NAME_COLUMN, NULL);
-
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-
-  //renderer = gtk_cell_renderer_int_new();
+  
   column = gtk_tree_view_column_new_with_attributes("Size", renderer, 
                                                     "text", SIZE_COLUMN, NULL);
-
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-  //renderer = gtk_cell_renderer_toggle_new();
-
-  //column = gtk_tree_view_column_new_with_attributes("Checked out", renderer, 
-                                                    //"active", CHECKED_COLUMN, NULL);
-
-  //gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
-
+  
   return tree;
 
 }
