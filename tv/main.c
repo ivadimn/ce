@@ -7,6 +7,7 @@ enum
 {
    NAME_COLUMN,
    SIZE_COLUMN,
+   DATA_COLUMN,
    N_COLUMNS
 };
 
@@ -14,9 +15,13 @@ static void selection_changed(GtkTreeSelection *selection, gpointer data) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   gchar *name;
+  file_info_t *finfo;
+
   if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
     gtk_tree_model_get(model, &iter, NAME_COLUMN, &name, -1);
+    gtk_tree_model_get(model, &iter, DATA_COLUMN, &finfo, -1);
     g_print ("You selected a file: %s\n", name);
+    g_print ("You selected a file: %s\n", finfo->full_name);
     g_free (name);  
   }
 }
@@ -37,7 +42,8 @@ static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir, GtkTreeIte
     gtk_tree_store_append(store, &iter, NULL);
     gtk_tree_store_set(store, &iter,
                       NAME_COLUMN, dir->flist[i].name,
-                      SIZE_COLUMN, dir->flist[i].size, -1);
+                      SIZE_COLUMN, dir->flist[i].size,
+                      DATA_COLUMN, &dir->flist[i], -1);
   }
 
 }
@@ -51,7 +57,8 @@ static GtkWidget* init_tree(file_info_t* dir) {
 
   store = gtk_tree_store_new(N_COLUMNS, 
                               G_TYPE_STRING,
-                              G_TYPE_ULONG
+                              G_TYPE_ULONG,
+                              G_TYPE_POINTER
                               );
 
   refresh_tree_model(store, dir, NULL);
@@ -73,6 +80,14 @@ static GtkWidget* init_tree(file_info_t* dir) {
                                                     "text", SIZE_COLUMN, 
                                                      NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+
+  /*column = gtk_tree_view_column_new_with_attributes("data", renderer, 
+                                                    "pointer", DATA_COLUMN,
+                                                     NULL); */
+  column = gtk_tree_view_column_new();                                                   
+  gtk_tree_view_column_set_visible(column, FALSE);                                                  
+  gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+
 
   select = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree));
   gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
