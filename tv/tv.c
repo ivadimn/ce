@@ -1,23 +1,9 @@
 #include "file_info.h"
 #include "tv.h"
 
+static GtkTreeStore *store;
 
-static void selection_changed(GtkTreeSelection *selection, gpointer data) {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  gchar *name;
-  file_info_t *finfo;
-
-  if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
-    gtk_tree_model_get(model, &iter, NAME_COLUMN, &name, -1);
-    gtk_tree_model_get(model, &iter, DATA_COLUMN, &finfo, -1);
-    g_print ("You selected a file: %s\n", name);
-    g_print ("You selected a file: %s\n", finfo->full_name);
-    g_free (name);  
-  }
-}
-
-static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir, GtkTreeIter *parent_iter) {
+static void update_tree(file_info_t* dir, GtkTreeIter *parent_iter) {
 
   GtkTreeIter iter;
   
@@ -26,21 +12,33 @@ static void refresh_tree_model(GtkTreeStore *store, file_info_t* dir, GtkTreeIte
   get_file_list(dir);
 
   printf(" - %ld\n", dir->size);
-
   
   for (size_t i = 0; i < dir->size; i++) {
     printf(" - %s\n", dir->flist[i].name);
-    gtk_tree_store_append(store, &iter, NULL);
+    gtk_tree_store_append(store, &iter, parent_iter);
     gtk_tree_store_set(store, &iter,
                       NAME_COLUMN, dir->flist[i].name,
                       SIZE_COLUMN, dir->flist[i].size,
                       DATA_COLUMN, &dir->flist[i], -1);
   }
+}
 
+static void selection_changed(GtkTreeSelection *selection, gpointer data) {
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  file_info_t *finfo;
+
+  if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
+    gtk_tree_model_get(model, &iter, DATA_COLUMN, &finfo, -1);
+    g_print ("You selected a file: %s, : %d\n", finfo->full_name, finfo->type);
+    if (finfo->type == TYPE_DIR && finfo->flist == NULL) {
+      update_tree(finfo, &iter);  
+    }
+  }
 }
 
 static GtkWidget* init_tree(file_info_t* dir) {
-  GtkTreeStore *store;
+  
   GtkWidget *tree;
   GtkTreeViewColumn *column;
   GtkCellRenderer *renderer;
@@ -52,7 +50,7 @@ static GtkWidget* init_tree(file_info_t* dir) {
                               G_TYPE_POINTER
                               );
 
-  refresh_tree_model(store, dir, NULL);
+  update_tree(dir, NULL);
 
   tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 
@@ -90,7 +88,6 @@ void activate (GtkApplication* app, gpointer user_data)   {
   file_info_t* dir;
   char cur_dir[MAX_NAME];
 
-  //создаём главное окно  
   window = gtk_application_window_new (app);
   gtk_window_set_title (GTK_WINDOW (window), "...");
   gtk_window_set_default_size (GTK_WINDOW (window), 600, 400);

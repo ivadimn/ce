@@ -28,7 +28,7 @@ size_t get_dir_size(char *dir) {
 
 void get_file_info(file_info_t* finfo) {
     struct stat stat_buff;
-    int result = stat(finfo->name, &stat_buff);
+    int result = stat(finfo->full_name, &stat_buff);
     if (result == -1) {
         err_cont("Error while getting file info %s", finfo->name);
         finfo->type = TYPE_NONE;
@@ -43,6 +43,7 @@ void get_file_info(file_info_t* finfo) {
         finfo->type = TYPE_FILE;
         finfo->size = stat_buff.st_size;
     }
+    
     return;
 }
 

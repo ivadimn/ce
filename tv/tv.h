@@ -9,6 +9,7 @@ enum
 {
    NAME_COLUMN,
    SIZE_COLUMN,
+   DATE_COLUMN,
    DATA_COLUMN,
    N_COLUMNS
 };
