@@ -1,0 +1,18 @@
+#ifndef _TV_H_
+#define _TV_H_
+
+#include <gtk/gtk.h>
+
+static GtkWidget *window = NULL;
+
+enum
+{
+   NAME_COLUMN,
+   SIZE_COLUMN,
+   DATA_COLUMN,
+   N_COLUMNS
+};
+
+void activate (GtkApplication* app, gpointer user_data);
+
+#endif

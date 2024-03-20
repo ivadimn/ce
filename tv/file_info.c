@@ -4,6 +4,27 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+size_t get_dir_size(char *dir) {
+
+    struct dirent *dp = NULL;
+    DIR *dfd = NULL;
+    size_t count = 0;
+
+    if((dfd = opendir(dir))==NULL){
+        err_cont("Ошибка открытия каталога: %s", dir);
+        return 0;
+    }
+
+    while((dp=readdir(dfd)) != NULL){
+        
+        if(strcmp(dp->d_name,".") == 0
+            || strcmp(dp->d_name,"..") ==0 )
+            continue;
+        count++;    
+    }
+    closedir(dfd); 
+    return count;   
+}
 
 void get_file_info(file_info_t* finfo) {
     struct stat stat_buff;
@@ -16,7 +37,7 @@ void get_file_info(file_info_t* finfo) {
     
     if (S_ISDIR(stat_buff.st_mode)) {
         finfo->type = TYPE_DIR;
-        finfo->size = 0;
+        finfo->size = get_dir_size(finfo->full_name);
     }
     else {
         finfo->type = TYPE_FILE;
@@ -64,13 +85,7 @@ file_info_t* create_dir( char *dir) {
     file_info_t *finfo = NULL;
     struct dirent *dp = NULL;
     DIR *dfd = NULL;
-    size_t count = 0;
-
-    if((dfd = opendir(dir))==NULL){
-        err_cont("Ошибка открытия каталога: %s", dir);
-        return NULL;
-    }
-
+    
     finfo = (file_info_t*) malloc(sizeof(file_info_t));
     if (finfo == NULL) {
         err_sys("Ошибка выделения памяти!");
@@ -79,15 +94,6 @@ file_info_t* create_dir( char *dir) {
     strcpy(finfo->name, dir);
     strcpy(finfo->full_name, dir);
     finfo->flist = NULL;
-    
-    while((dp=readdir(dfd)) != NULL){
-        
-        if(strcmp(dp->d_name,".") == 0
-            || strcmp(dp->d_name,"..") ==0 )
-            continue;
-        count++;    
-    }
-    finfo->size = count;
-    closedir(dfd);
+    finfo->size = get_dir_size(dir);
     return finfo;
 }
