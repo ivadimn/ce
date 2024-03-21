@@ -43,7 +43,7 @@ void get_file_info(file_info_t* finfo) {
         finfo->type = TYPE_FILE;
         finfo->size = stat_buff.st_size;
     }
-    
+    finfo->date = stat_buff.st_ctime;
     return;
 }
 

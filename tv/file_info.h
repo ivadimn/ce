@@ -14,7 +14,7 @@ typedef struct file_info_t {
     char name[MAX_NAME];
     size_t size;
     file_t type;
-    struct tm date;
+    time_t date;
     struct file_info_t *flist;
 } file_info_t;
 

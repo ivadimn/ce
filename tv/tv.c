@@ -6,7 +6,8 @@ static GtkTreeStore *store;
 static void update_tree(file_info_t* dir, GtkTreeIter *parent_iter) {
 
   GtkTreeIter iter;
-  
+  char buff[12];
+    
   gtk_window_set_title (GTK_WINDOW (window), dir->full_name);
 
   get_file_list(dir);
@@ -14,11 +15,13 @@ static void update_tree(file_info_t* dir, GtkTreeIter *parent_iter) {
   printf(" - %ld\n", dir->size);
   
   for (size_t i = 0; i < dir->size; i++) {
+    strftime(buff, 12, "%d.%m.%Y", localtime(&dir->flist[i].date));
     printf(" - %s\n", dir->flist[i].name);
     gtk_tree_store_append(store, &iter, parent_iter);
     gtk_tree_store_set(store, &iter,
                       NAME_COLUMN, dir->flist[i].name,
                       SIZE_COLUMN, dir->flist[i].size,
+                      DATE_COLUMN, buff,
                       DATA_COLUMN, &dir->flist[i], -1);
   }
 }
@@ -47,6 +50,7 @@ static GtkWidget* init_tree(file_info_t* dir) {
   store = gtk_tree_store_new(N_COLUMNS, 
                               G_TYPE_STRING,
                               G_TYPE_ULONG,
+                              G_TYPE_STRING,
                               G_TYPE_POINTER
                               );
 
@@ -66,7 +70,16 @@ static GtkWidget* init_tree(file_info_t* dir) {
   
   column = gtk_tree_view_column_new_with_attributes("Size", renderer, 
                                                     "text", SIZE_COLUMN, 
-                                                     NULL);
+                                                    NULL);
+  gtk_tree_view_column_set_resizable(column, TRUE);                                                  
+  gtk_tree_view_column_set_alignment(column, 0.0);
+  gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
+
+  column = gtk_tree_view_column_new_with_attributes("Date edidting", renderer, 
+                                                    "text", DATE_COLUMN, 
+                                                    NULL);
+  gtk_tree_view_column_set_resizable(column, TRUE);                                                  
+  gtk_tree_view_column_set_alignment(column, 0.0);
   gtk_tree_view_append_column(GTK_TREE_VIEW(tree), column);
 
   column = gtk_tree_view_column_new();                                                   
@@ -87,11 +100,14 @@ void activate (GtkApplication* app, gpointer user_data)   {
   GtkWidget *tree;
   file_info_t* dir;
   char cur_dir[MAX_NAME];
+  gint rwidth, rheight;
 
   window = gtk_application_window_new (app);
+  
   gtk_window_set_title (GTK_WINDOW (window), "...");
+  gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (window), 600, 400);
-
+  
   getcwd(cur_dir, MAX_NAME - 1);
   dir = create_dir(cur_dir);
   tree = init_tree(dir);
