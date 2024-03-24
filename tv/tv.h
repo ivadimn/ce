@@ -3,8 +3,6 @@
 
 #include <gtk/gtk.h>
 
-static GtkWidget *window = NULL;
-
 enum
 {
    NAME_COLUMN,

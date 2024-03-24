@@ -10,27 +10,40 @@ static void print_hello(GtkApplication *app, gpointer data) {
 static void activate (GtkApplication* app, gpointer user_data)   {
 
   GtkWidget *window;
+  GtkWidget *scrolled_window;
   GtkWidget *grid;
+  GtkWidget *box;
+  GtkWidget *image;
   GtkWidget *button;
+
 //создаём главное окно  
   window = gtk_application_window_new (app);
   gtk_window_set_title (GTK_WINDOW (window), "Window");
-  //gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
+  gtk_window_set_default_size (GTK_WINDOW (window), 800, 600);
 
   grid = gtk_grid_new();
   gtk_window_set_child(GTK_WINDOW(window), grid);
 
   button = gtk_button_new_with_label("Button 1");
   g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
-  gtk_grid_attach(GTK_GRID(grid), button, 0, 0, 1, 1);
 
-  button = gtk_button_new_with_label("Button 2");
-  g_signal_connect(button, "clicked", G_CALLBACK(print_hello), NULL);
-  gtk_grid_attach(GTK_GRID(grid), button, 1, 0, 1, 1);
+  box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_box_append(GTK_BOX(box), button);
   
-  button = gtk_button_new_with_label("Quit");
-  g_signal_connect_swapped(button, "clicked", G_CALLBACK(gtk_window_destroy), window);
-  gtk_grid_attach(GTK_GRID(grid), button, 0, 1, 2, 1); 
+  gtk_grid_attach(GTK_GRID(grid), box, 0, 0, 1, 1);
+
+
+  scrolled_window = gtk_scrolled_window_new ();
+  image = gtk_image_new_from_file ("1533.jpg");
+  /* And add it to the scrolled window */
+  //gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), image);
+  
+  gtk_scrolled_window_add (GTK_SCROLLED_WINDOW (scrolled_window), image);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scrolled_window),
+                                                      GTK_POLICY_AUTOMATIC,
+                                                      GTK_POLICY_AUTOMATIC);
+
+  gtk_grid_attach(GTK_GRID(grid), scrolled_window, 0, 1, 1, 1); 
 
   gtk_window_present (GTK_WINDOW (window));
 }
