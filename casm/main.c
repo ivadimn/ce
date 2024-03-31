@@ -73,7 +73,7 @@ void m(list_node_t* node, print_func pfunc) {
     m(lnode->next, pfunc);
 }
 
-int main(int argc, char** argv) {
+int main() {
 
     list_node_t* head = NULL;
     list_node_t* odd = NULL;
