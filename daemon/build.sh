@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -Wpedantic -std=c11 main.c common.c -o dem
+gcc -Wall -Wextra -Wpedantic -std=c11 main.c common.c turn_daemon.c server.c -o dem

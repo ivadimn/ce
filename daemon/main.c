@@ -1,132 +1,69 @@
 #include "common.h"
+#include "server.h"
+#include "turn_daemon.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <getopt.h>
 
+static char *app_name = NULL;
+int log_to_stderr;
 
-
-int globvar = 6;
-char buf[] = "запись в stdout\n";
-
-void pr_exit(int status) {
-    if (WIFEXITED(status))  {
-        printf("нормальное завершение, код выхода = %d\n", WEXITSTATUS(status));
-    } else if (WIFSIGNALED(status)) {
-        printf("аварийное завершение, код выхода = %d%s\n", WTERMSIG(status),
-#ifdef WCOREDUMP
-            WCOREDUMP(status) ? "(создан файл core)" : ""); 
-#else
-            "");
-#endif    
-    }
-    else if (WIFSTOPPED(status)) 
-        printf("дочерний процесс остановлен, номер сигнала = %d\n", 
-                WSTOPSIG(status));
+/*
+ *  печатает help по использованию приложения
+ */
+void print_help(void)
+{
+	printf("\n Использование: %s [ОПЦИИ]\n\n", app_name);
+	printf("  Options:\n");
+	printf("   -h --help                 Печатает эту справку\n");
+	printf("   -d --daemon               Запукск в режиме демона\n");
+	printf("   -c --console              Запуск в интерактивном режиме\n");
+	printf("\n");
 }
 
-void charatatime(char* str) {
-    char *ptr;
-    int c;
-    
-    setbuf(stdout, NULL);      //небуферизированный режим вывода
-    for (ptr = str; (c = *ptr++) != 0; ) {
-        putc(c, stdout);
-    }
-}
+int main(int argc, char** argv) {
 
-int main(void) {
-    
-    pid_t pid;
+    static struct option options[] = {
+		{"daemon", no_argument, 0, 'd'},
+		{"console", no_argument, 0, 'c'},
+		{"help", no_argument, 0, 'h'},
+		{NULL, 0, 0, 0}
+	};
 
-    if ((pid = fork()) < 0) {
-        err_sys("Ошибка вызова функции fork");
-    } else if (pid == 0) {
-        charatatime("от дочернего процесса\n");
-    } else {
-        charatatime("от родительского процесса\n");
-    }
+    int value, option_index = 0;
+    int is_daemon = 0;
+    app_name = argv[0];
+    log_to_stderr = 1;
+    if (argc < 2)
+        print_help();
 
-
-    /*if ((pid = fork()) < 0) {
-        err_sys("Ошибка вызова функции fork");
-    } else if (pid == 0) {     //первый потомок
-        if ((pid = fork()) < 0)
-            err_sys("Ошибка вызова функции fork");
-        else if (pid > 0)                     
-            exit(0);            //первый потомок он же родительский 
-                                //процесс для для второго потомка
-        */                        
-        /* 
-        *   Здесь продолжает работу второй потомок, для котрого родительским 
-        *   стал процесс init, поскольку настоящий родительский процесс
-        *   вызвал функцию exit() чуть выше
-        *   Теперь можно продолжить работу, зная, что когда процесс завершится
-        *   его код завершения получит процесс init 
-        */
-        /*sleep(2);
-        printf("второй потомок, идентифйикатор родительского процесса = %ld\n",
-                (long)getppid());
-        exit(0);        
-    }
-    if (waitpid(pid, NULL, 0) != pid)
-            err_sys("Ошибка вызова функции waitpid");
-    */
-    /*
-    *   Здесь продолжает работу родительский (первоначальный) процесс,
-    *   поскольку он не является родительским процессом для второго потомка
-    */
-    
-
-
-    /*int status;
-
-    if ((pid = fork()) < 0)
-        err_sys("Ошибка вызова функции fork");
-    else if (pid == 0)                     //дочерний процесс
-        exit(7);
-        
-    if (wait(&status) != pid) //дождаться завершения дочернего процесса
-        err_sys("Ошибка вызова функции wait");
-    pr_exit(status);
-
-
-    if ((pid = fork()) < 0)
-        err_sys("Ошибка вызова функции fork");
-    else if (pid == 0)                     //дочерний процесс
-        abort();
-        
-    if (wait(&status) != pid) //дождаться завершения дочернего процесса
-        err_sys("Ошибка вызова функции wait");
-    pr_exit(status);
-
-
-    if ((pid = fork()) < 0)
-        err_sys("Ошибка вызова функции fork");
-    else if (pid == 0)                     //дочерний процесс
-        status /= 0;
-        
-    if (wait(&status) != pid) //дождаться завершения дочернего процесса
-        err_sys("Ошибка вызова функции wait");
-    pr_exit(status); */
-
-
-    /*int var;
-
-    var = 88;
-    if (write(STDOUT_FILENO, buf, sizeof(buf) - 1) != sizeof(buf) - 1) {
-        err_sys("ошибка вызова функции write");
-    }
-    printf("перед вызовом функции fork\n");
-
-    if ((pid = fork()) < 0) {
-        err_sys("ошибка вызова функции fork");
-    } else if (pid == 0) {    //дочерний процесс
-        globvar++;
-        var++;
-    } else {
-        sleep(2);
+    while ((value = getopt_long(argc, argv, "hdc", options, &option_index)) != -1) {
+		switch (value) {
+			case 'c':
+				is_daemon = 0;
+                printf("Интерактивный режим \n");
+				break;
+			case 'd':
+				is_daemon = 1;
+                printf("Режим демона\n");
+				break;
+			case 'h':
+				print_help();
+				return EXIT_SUCCESS;
+			case '?':
+				print_help();
+				return EXIT_FAILURE;
+			default:
+				break;
+		}
+	}    
+    if (is_daemon) {
+        log_to_stderr = 0;
+        turn_daemon(app_name);    
     }
 
-    printf("pid = %ld, globvar = %d, var = %d\n", (long) getpid(), globvar, var);*/
+    run_server(app_name);
 
-    exit(0);
+    return EXIT_SUCCESS;
+
 }
