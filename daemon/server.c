@@ -1,14 +1,50 @@
-#include "common.h"
+#include "log.h"
 #include "server.h"
+#include <errno.h>
 #include <sys/types.h>
 #include <fcntl.h>
 
+char buf[1024];
+char ans[1024];
+char err[1024];
 
-int run_server(const char* cmd) {
+const char* commands[] = {
+    "size",
+    "exit"
+};
 
-    int sock, client_sock, rval;
+int handle_query(int client_socket, const char* query, const char* filename) {
+    
+    int64_t fsize = 0;
+    printf("%s\n", query);
+    bzero(ans, 1024);
+    if(strcmp(query, commands[1]) == 0)
+        return 0;
+    if (strcmp(query, commands[0]) != 0)     {
+        strcpy(ans, "Команда не поддерживается,\nподдерживаемые команды: size, exit.\n");
+        send(client_socket, ans, strlen(ans), 0);
+        return -1;
+    }
+    else {
+        fsize = get_file_size(filename, err);
+        if (fsize >= 0) {
+            sprintf("Размер файла %s: %lu байт.", filename,  fsize);
+            send(client_socket, ans, strlen(ans), 0);
+            return 0;
+        }
+        else {
+            send(client_socket, err, strlen(err), 0);
+            return -1;
+        }
+        
+    }
+}
+
+int run_server(const char* cmd, const char* filename) {
+
+    int sock, client_sock, rval, rc;
     struct sockaddr_un server;
-    char buf[1024];
+    
 
     sock = socket(AF_UNIX, SOCK_STREAM, 0);
     log_info("Начало работы сервера %s\n", cmd);
@@ -41,8 +77,11 @@ int run_server(const char* cmd) {
                 log_ret("Ошибка чтания данных из сокета.");
             else if (rval == 0)
                 log_ret("Закрытие соединения.");
-            else
-                send(client_sock, buf, strlen(buf), 0);
+            else {
+                rc = handle_query(client_sock, buf, filename);
+                if (rc == 0)
+                    break;
+            }    
         } while (rval > 0);
 
         close(client_sock);
@@ -54,7 +93,7 @@ int run_server(const char* cmd) {
 }
 
 
-int64_t get_file_size(const char* filename) {
+int64_t get_file_size(const char* filename, char* err_msg) {
     
 	int fd;
     int64_t fsize = 0;
@@ -62,10 +101,13 @@ int64_t get_file_size(const char* filename) {
 
     fd = open(filename, O_RDONLY);
     if (fd == -1) {
+        sprintf(err_msg, "Ошибка открытия файла %s: %s", filename,  strerror(errno));
         log_ret("Ошибка открытия файла: %s", filename);
         return -1;
     }
 	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
+        sprintf(err_msg, "Ошибка обработки файла %s: %s", filename, strerror(errno));
+        log_ret("Ошибка обработки файла: %s", filename);
 		fsize = -1;
 	}
 	else{

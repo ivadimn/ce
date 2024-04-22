@@ -1,4 +1,4 @@
-#include "common.h"
+#include "log.h"
 #include "server.h"
 #include "turn_daemon.h"
 #include <sys/types.h>
@@ -34,8 +34,11 @@ int main(int argc, char** argv) {
     int is_daemon = 0;
     app_name = argv[0];
     log_to_stderr = 1;
-    if (argc < 2)
+
+    if (argc < 2) {
         print_help();
+		exit(1);
+	}
 
     while ((value = getopt_long(argc, argv, "hdc", options, &option_index)) != -1) {
 		switch (value) {
@@ -62,7 +65,7 @@ int main(int argc, char** argv) {
         turn_daemon(app_name);    
     }
 
-    run_server(app_name);
+    run_server(app_name, "/home/vadim/ce/daemon/test.txt");
 
     return EXIT_SUCCESS;
 

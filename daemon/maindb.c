@@ -18,6 +18,8 @@ int get_action() {
   return action;
 }
 
+int log_to_stderr = 1;
+
 
 
 int main (int argc,char **argv)
@@ -32,6 +34,9 @@ int main (int argc,char **argv)
       case 2:
         add_param();
         break;
+      case 3:
+        remove_param();
+        break;  
       case 4:
         change_param();
         break;

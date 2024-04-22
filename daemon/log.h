@@ -1,5 +1,5 @@
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef _LOG_H_
+#define _LOG_H_
 
 #define  _XOPEN_SOURCE 700
 

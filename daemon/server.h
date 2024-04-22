@@ -7,7 +7,8 @@
 #define SOCKET_NAME "filesize.socket"
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 
-int run_server(const char*); 
-int64_t get_file_size(const char* filename);
+int run_server(const char* cmd, const char* filename); 
+int64_t get_file_size(const char* filename, char* err_msg);
+int handle_query(int client_socket, const char* query, const char* filename);
 
 #endif

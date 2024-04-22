@@ -1,4 +1,4 @@
-#include "common.h"
+#include "log.h"
 #include "turn_daemon.h"
 #include <stdlib.h>
 #include <errno.h>
@@ -16,8 +16,6 @@ int turn_daemon(const char* cmd) {
     */
     if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
         log_quit("Невозможно получить максимальный номер дескриптора %s.", cmd);
-    
-    log_info("Получили rlimit %s.", cmd);
     
     switch (fork())         //превращение в фоновый процесс 
     {

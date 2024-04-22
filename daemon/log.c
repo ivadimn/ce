@@ -1,4 +1,4 @@
-#include "common.h"
+#include "log.h"
 #include <errno.h>
 #include <syslog.h>
 #include <stdarg.h>

@@ -1,7 +1,7 @@
 #include "db.h"
 #include "log.h"
 
-static  const char* db_name = "fsize_conf.db";
+static  const char* db_name = "conf.db";
 static sqlite3 *db;
 static char sql[SQL_LEN];
 
@@ -67,7 +67,7 @@ int get_count(void) {
 int select_one(param_t * param) {
     sqlite3_stmt* stmt; 
     char *err = NULL;
-    char* tmp;
+    const char* tmp;
     int rc = 0;
     char p[NAME_LEN];
 
@@ -105,7 +105,7 @@ int select_all(param_t* param, int limit) {
     sqlite3_stmt* stmt; 
     int rc = 0;
     int index = 0;
-    char* tmp;
+    const char* tmp;
 
     if(sqlite3_prepare_v2(db, sql_select_all, -1, &stmt, NULL) != SQLITE_OK) {
         err_msg("Ошибка подготовки SQL-запроса: %s", sqlite3_errmsg(db));
