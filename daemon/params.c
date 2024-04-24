@@ -6,6 +6,11 @@
 #include <stdlib.h>
 
 
+int query_value(param_t* param) {
+    return select_one(param);
+}
+
+#ifndef DAEMON
 int get_line(char* line, int size) {
     char ch;
     int index = 0;
@@ -97,4 +102,4 @@ int remove_param() {
 
 };
 
-
+#endif

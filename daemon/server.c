@@ -8,16 +8,24 @@ char buf[1024];
 char ans[1024];
 char err[1024];
 
+const char* help_msg = "Добро пожаловать!\n\
+принимаемые команды:\n\
+\tsize - вывести размер файла,\n\
+\texit - закрыть сервер.\n";
+
 const char* commands[] = {
     "size",
     "exit"
 };
 
-int handle_query(int client_socket, const char* query, const char* filename) {
+int handle_query(int client_socket, char* query, const char* filename) {
     
     int64_t fsize = 0;
-    printf("%s\n", query);
     bzero(ans, 1024);
+    size_t len = strlen(query);
+    if (query[len-1] == '\n')
+        query[len-1] = '\0';
+
     if(strcmp(query, commands[1]) == 0)
         return 0;
     if (strcmp(query, commands[0]) != 0)     {
@@ -28,7 +36,7 @@ int handle_query(int client_socket, const char* query, const char* filename) {
     else {
         fsize = get_file_size(filename, err);
         if (fsize >= 0) {
-            sprintf("Размер файла %s: %lu байт.", filename,  fsize);
+            sprintf(ans, "Размер файла %s: %lu байт.\n", filename,  fsize);
             send(client_socket, ans, strlen(ans), 0);
             return 0;
         }
@@ -42,7 +50,7 @@ int handle_query(int client_socket, const char* query, const char* filename) {
 
 int run_server(const char* cmd, const char* filename) {
 
-    int sock, client_sock, rval, rc;
+    int sock, client_sock, rval, rc = -1;
     struct sockaddr_un server;
     
 
@@ -70,21 +78,27 @@ int run_server(const char* cmd, const char* filename) {
             log_ret("Ошибка вызова функции accept.");
             break;
         }
-        else do {
+        else  {
+            send(client_sock, help_msg, strlen(help_msg), 0);
+            do {
             bzero(buf, sizeof(buf));
             
-            if ((rval = read(client_sock, buf, 1024)) < 0)
-                log_ret("Ошибка чтания данных из сокета.");
-            else if (rval == 0)
-                log_ret("Закрытие соединения.");
-            else {
-                rc = handle_query(client_sock, buf, filename);
-                if (rc == 0)
-                    break;
+                if ((rval = read(client_sock, buf, 1024)) < 0)
+                    log_ret("Ошибка чтания данных из сокета.");
+                else if (rval == 0)
+                    log_ret("Закрытие соединения.");
+                else {
+                    rc = handle_query(client_sock, buf, filename);
+                    if (rc == 0)
+                        break;
             }    
-        } while (rval > 0);
+            } while (rval > 0);
+        }
 
         close(client_sock);
+        if (rc == 0)
+            break;
+        
     }
     close(sock);
     unlink(SOCKET_NAME);
@@ -105,7 +119,7 @@ int64_t get_file_size(const char* filename, char* err_msg) {
         log_ret("Ошибка открытия файла: %s", filename);
         return -1;
     }
-	if ((fstat(fd, & fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
+    if((fstat(fd, &fileStatbuff) != 0) || (!S_ISREG(fileStatbuff.st_mode))) {
         sprintf(err_msg, "Ошибка обработки файла %s: %s", filename, strerror(errno));
         log_ret("Ошибка обработки файла: %s", filename);
 		fsize = -1;

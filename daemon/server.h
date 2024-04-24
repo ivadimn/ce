@@ -9,6 +9,6 @@
 
 int run_server(const char* cmd, const char* filename); 
 int64_t get_file_size(const char* filename, char* err_msg);
-int handle_query(int client_socket, const char* query, const char* filename);
+int handle_query(int client_socket, char* query, const char* filename);
 
 #endif

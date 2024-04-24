@@ -5,16 +5,21 @@ static  const char* db_name = "conf.db";
 static sqlite3 *db;
 static char sql[SQL_LEN];
 
-
-const char* sql_select_all = "SELECT id, name, value, ex_value, description FROM param; ";
 const char* sql_select_one = "SELECT id, name, value, ex_value, description FROM param \
 WHERE name = %s; ";
+
+
+#ifndef DAEMON
+
+const char* sql_select_all = "SELECT id, name, value, ex_value, description FROM param; ";
 const char* sql_select_count = "SELECT COUNT(*) FROM param ;";
 const char* sql_insert = "INSERT INTO param(name, value, ex_value, description) \
 values(%s, %s, %s, %s); ";
 const char* sql_update = "UPDATE param SET value=%s, ex_value=%s, description=%s \
 WHERE name=%s; ";
 const char* sql_remove = "DELETE FROM param WHERE name=%s; ";
+
+#endif
 
 
 void open_db(void) {
@@ -41,6 +46,45 @@ void str_param(const char* data, char* param) {
     param[len + 2] = '\0';
 }
 
+
+int select_one(param_t * param) {
+    sqlite3_stmt* stmt; 
+    const char* tmp;
+    int rc = 0;
+    char p[NAME_LEN];
+
+    str_param(param->name, p);
+    sprintf(sql, sql_select_one, p);
+
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        err_msg("Ошибка подготовки SQL-запроса: %s", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+    while((rc = sqlite3_step(stmt)) == SQLITE_ROW)   {
+        param->id = sqlite3_column_int(stmt, 0);
+        strcpy(param->name, (const char*)sqlite3_column_text(stmt, 1));
+        strcpy(param->value, (const char*)sqlite3_column_text(stmt, 2));
+        tmp = (const char*)sqlite3_column_text(stmt, 3);
+        if (tmp)
+            strcpy(param->ex_value, tmp);
+        tmp = (const char*)sqlite3_column_text(stmt, 4);
+        if (tmp)
+            strcpy(param->description, tmp);
+    }
+    
+    if(rc != SQLITE_DONE) {
+        err_msg("Ошибка выполнения SQL-запроса: %s", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+    sqlite3_finalize(stmt);
+    return rc;
+
+}
+
+#ifndef DAEMON
+
 int get_count(void) {
     sqlite3_stmt* stmt; 
     char *err = NULL;
@@ -64,43 +108,6 @@ int get_count(void) {
     return count;
 }
 
-int select_one(param_t * param) {
-    sqlite3_stmt* stmt; 
-    char *err = NULL;
-    const char* tmp;
-    int rc = 0;
-    char p[NAME_LEN];
-
-    str_param(param->name, p);
-    sprintf(sql, sql_select_one, p);
-
-    if(sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
-        err_msg("Ошибка подготовки SQL-запроса: %s", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        return -1;
-    }
-    while((rc = sqlite3_step(stmt)) == SQLITE_ROW)   {
-        param->id = sqlite3_column_int(stmt, 0);
-        strcpy(param->name, sqlite3_column_text(stmt, 1));
-        strcpy(param->value, sqlite3_column_text(stmt, 2));
-        tmp = sqlite3_column_text(stmt, 3);
-        if (tmp)
-            strcpy(param->ex_value, tmp);
-        tmp = sqlite3_column_text(stmt, 4);
-        if (tmp)
-            strcpy(param->description, tmp);
-    }
-    
-    if(rc != SQLITE_DONE) {
-        err_msg("Ошибка выполнения SQL-запроса: %s", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        return -1;
-    }
-    sqlite3_finalize(stmt);
-    return rc;
-
-}
-
 int select_all(param_t* param, int limit) {
     sqlite3_stmt* stmt; 
     int rc = 0;
@@ -115,12 +122,12 @@ int select_all(param_t* param, int limit) {
 
     while((rc = sqlite3_step(stmt)) == SQLITE_ROW && index < limit)   {
         param[index].id = sqlite3_column_int(stmt, 0);
-        strcpy(param[index].name, sqlite3_column_text(stmt, 1));
-        strcpy(param[index].value, sqlite3_column_text(stmt, 2));
-        tmp = sqlite3_column_text(stmt, 3);
+        strcpy(param[index].name, (const char*)sqlite3_column_text(stmt, 1));
+        strcpy(param[index].value, (const char*)sqlite3_column_text(stmt, 2));
+        tmp = (const char*)sqlite3_column_text(stmt, 3);
         if (tmp)
             strcpy(param[index].ex_value, tmp);
-        tmp = sqlite3_column_text(stmt, 4);
+        tmp = (const char*)sqlite3_column_text(stmt, 4);
         if (tmp)
             strcpy(param[index].description, tmp);
         index++;
@@ -188,3 +195,4 @@ int remove(const char* pname) {
     }
     return 1;
 }
+#endif

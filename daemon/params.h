@@ -15,6 +15,9 @@ typedef struct {
     char description[MAX_LEN];
 } param_t;
 
+int query_value(param_t* param);
+
+#ifndef DAEMOM
 int get_line(char* line, int size);
 void get_param_name(char *pname);
 void get_param_value(char *pvalue);
@@ -22,10 +25,11 @@ void get_param_exvalue(char *pexvalue);
 void get_param_description(char *pname);
 
 
+
 void print_params_list(void);
 int add_param();
 int change_param();
 int remove_param();
-
+#endif
 
 #endif

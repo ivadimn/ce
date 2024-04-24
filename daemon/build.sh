@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -Wpedantic -std=c11 main.c log.c turn_daemon.c server.c -o dem
+gcc `pkg-config --cflags sqlite3` -DDAEMON -Wall -Wextra -Wpedantic -std=c11 main.c log.c turn_daemon.c server.c params.c db.c -o dem `pkg-config --libs sqlite3`
