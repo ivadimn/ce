@@ -22,7 +22,7 @@ int log_to_stderr = 1;
 
 
 
-int main (int argc,char **argv)
+int main ()
 {
   int action;
   open_db();

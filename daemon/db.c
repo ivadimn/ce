@@ -87,7 +87,6 @@ int select_one(param_t * param) {
 
 int get_count(void) {
     sqlite3_stmt* stmt; 
-    char *err = NULL;
     int rc = 0;
     int count = 0;
 

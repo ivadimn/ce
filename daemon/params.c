@@ -62,7 +62,7 @@ void print_params_list(void) {
         putchar('-');
     printf("\n");    
     
-    for (size_t i = 0; i < count; i++)  {
+    for (int i = 0; i < count; i++)  {
         printf("%-20s%-32s%-20s%-32s\n", params[i].name, params[i].value,
                                               params[i].ex_value, params[i].description);    
     }
@@ -99,7 +99,6 @@ int remove_param() {
     rc = remove(pname);
     printf("Параметр %s удалён.\n", pname);
     return rc;
-
-};
+}
 
 #endif
