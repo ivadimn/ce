@@ -6,7 +6,7 @@
 static void log_paste(int errnoflag, int error, int priority, 
                     const char* fmt, va_list va);
 
-static void log_write(int errnoflag, int error, int priority, 
+void log_write(int errnoflag, int error, int priority, 
                     const char* fmt, va_list va);
 
 
@@ -160,7 +160,8 @@ void log_write(int errnoflag, int error, int priority,
 
     time_t mytime = time(NULL);
     struct tm *now = localtime(&mytime);
-    strftime(buf, MAX_LEN - 1, "%c", now);
+    strftime(buf, MAX_LEN - 1, "%b %d %Y %H:%M:%s ", now);
+    printf("%s\n", buf);
 
 
 }
