@@ -6,7 +6,7 @@
 static void log_paste(int errnoflag, int error, int priority, 
                     const char* fmt, va_list va);
 
-void log_write(int errnoflag, int error, int priority, 
+void log_write(int errnoflag, int error, int level, 
                     const char* fmt, va_list va);
 
 
@@ -41,13 +41,29 @@ static const char* log_label(int level) {
 
 
 /*
-* инициализировать syslog если процесс работает в режиме демона
+* инициализировать лог файл
+* если эта функция не вызвана
+* то логи будут писаться в консоль
 */
 
-void log_open(const char* app, int option, int facility)
+void log_open(const char* log_file)
 {
-    if(log_to_stderr == 0)
-        openlog(app, option, facility);
+    file = open(log_file, O_CREAT | O_APPEND, S_IRWXU);
+    if(file < 0){
+        log_ret("Не удалось открыть лог-файл.");
+        return;
+    }
+    log_to_stderr = 0;
+}
+
+/*
+* закрывает лог-файл
+*/
+void log_close() {
+    if(file > 0) {
+        close(file);
+        log_to_stderr = 0;
+    } 
 }
 
 /*
@@ -153,14 +169,22 @@ static void log_paste(int errnoflag, int error, int priority,
     }
 }
 
-void log_write(int errnoflag, int error, int priority, 
+void log_write(int errnoflag, int error, int level, 
                             const char* fmt, va_list va) {
     
     char buf[MAX_LEN];
+    size_t wrote = 0;
 
     time_t mytime = time(NULL);
     struct tm *now = localtime(&mytime);
-    strftime(buf, MAX_LEN - 1, "%b %d %Y %H:%M:%s ", now);
+
+    wrote = strftime(buf, MAX_LEN - 1, "%b %d %Y %H:%M:%S ", now);
+    wrote += snprintf(buf + wrote, MAX_LEN - wrote - 1, " %s: ", log_label(level));
+    wrote += vsnprintf(buf + wrote, MAX_LEN - wrote - 1, fmt, va);
+    if (errnoflag) {
+        snprintf(buf + wrote, MAX_LEN - wrote - 1, ": %s", strerror(error));
+    }
+    strcat(buf, "\n");
     printf("%s\n", buf);
 
 
