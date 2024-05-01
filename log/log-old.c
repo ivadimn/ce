@@ -10,7 +10,7 @@ static void stackframe(char* st_info);
 
 
 static int log_to_stderr = 1;
-static int log_fd;
+static int file = -1;
 static pthread_mutex_t mtx;     // для синхронизации записи лога
 
 /*
@@ -60,8 +60,8 @@ void stackframe(char* st_info) {
 */
 void log_open(const char* log_file)
 {
-    log_fd = open(log_file, O_CREAT | O_APPEND | O_RDWR, FILE_MODE);
-    if(log_fd < 0){
+    file = open(log_file, O_CREAT | O_APPEND, S_IRWXU);
+    if(file < 0){
         err("Не удалось открыть лог-файл.");
         return;
     }
@@ -73,8 +73,8 @@ void log_open(const char* log_file)
 * закрывает лог-файл
 */
 void log_close() {
-    if(log_fd > 0) {
-        close(log_fd);
+    if(file > 0) {
+        close(file);
         log_to_stderr = 0;
     } 
     pthread_mutex_destroy(&mtx);
@@ -133,6 +133,67 @@ void logv(const char* func_name, int level, const char* fmt, ...) {
     pthread_mutex_unlock(&mtx);
 }
 
+
+/*
+* Выводит информационное сообщение
+*/
+// void log_info(const char* fmt, ...) {
+
+//     va_list ap;
+
+//     va_start(ap, fmt);
+//     log_write(0, 0, LOG_INFO, fmt, ap);
+//     va_end(ap);
+// }
+
+/*
+* Выводит отладочное сообщение
+*/
+// void log_debug(const char* fmt, ...) {
+
+//     va_list ap;
+
+//     va_start(ap, fmt);
+//     log_write(0, 0, LOG_DEBUG, fmt, ap);
+//     va_end(ap);
+// }
+
+/*
+* Выводит предупреждение
+*/
+// void log_warning(const char* fmt, ...) {
+
+//     va_list ap;
+
+//     va_start(ap, fmt);
+//     log_write(0, 0, LOG_WARNING, fmt, ap);
+//     va_end(ap);
+// }
+
+/*
+* Выводит сообщение об ошибке
+*/
+// void log_err(const char *fmt, ...) {
+    
+//     va_list ap;
+
+//     va_start(ap, fmt);
+//     log_write(1, errno, LOG_ERR, fmt, ap);
+//     va_end(ap);
+// }
+
+/*
+* Выводит сообщение о критической ошибке и завершает выполнение программы
+*/
+// void log_crit(const char* fmt, ...) {
+//     va_list ap;
+//     va_start(ap, fmt);
+//     log_write(1, errno, LOG_CRIT, fmt, ap);
+//     va_end(ap);
+//     abort(); 
+//     exit(1);
+// }
+
 /*
 * записать сообщение в лог файл или вывести на консоль
 * в случае LOG_ERROR или LOG_CRIT выводится cтэк вызовов
@@ -158,15 +219,16 @@ void log_write(const char* func_name, int errnoflag, int error, int level,
         stackframe(st_info);
     }
     
+
     if (log_to_stderr) {
         console(level, buf);
         if (level == LOG_ERR || level == LOG_CRIT)
             console(level, st_info);
     } else {
         strcat(buf, "\n");
-        wrote = write(log_fd, buf, strlen(buf));
-        if (level == LOG_ERR || level == LOG_CRIT) {
-            wrote = write(log_fd, st_info, strlen(st_info));
-        }
+        write(file, buf, strlen(buf));
+        if (level == LOG_ERR || level == LOG_CRIT)
+            write(file, st_info, strlen(st_info));
     }
+
 }

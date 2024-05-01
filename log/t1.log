@@ -1,0 +1,11 @@
+Apr 29 2024 15:07:53  DEBUG [main]: Отладочное сообщение 255.
+Apr 29 2024 15:07:53  INFO [main]: Информационное сообщение 255.
+Apr 29 2024 15:07:53  WARNING [main]: Предупреждение 255.
+Apr 29 2024 15:07:53  ERROR [func]: Ошибка открытия файла: No such file or directory
+Stack info:
+... ./test(+0x1a1c) [0x558f65cdfa1c]
+... ./test(+0x141f) [0x558f65cdf41f]
+... ./test(+0x14d0) [0x558f65cdf4d0]
+... /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f5c64f0ed90]
+... /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7f5c64f0ee40]
+... ./test(+0x1305) [0x558f65cdf305]

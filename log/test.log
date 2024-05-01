@@ -1,0 +1,22 @@
+Apr 29 2024 14:56:06  DEBUG [main]: Отладочное сообщение 255.
+Apr 29 2024 14:56:06  INFO [main]: Информационное сообщение 255.
+Apr 29 2024 14:56:06  WARNING [main]: Предупреждение 255.
+Apr 29 2024 14:56:06  ERROR [func]: Ошибка открытия файла: No such file or directory
+Stack info:
+... ./test(+0x1a07) [0x55dbd5d4ba07]
+... ./test(+0x141f) [0x55dbd5d4b41f]
+... ./test(+0x14bb) [0x55dbd5d4b4bb]
+... /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f5dbcb16d90]
+... /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7f5dbcb16e40]
+... ./test(+0x1305) [0x55dbd5d4b305]
+Apr 29 2024 14:58:16  DEBUG [main]: Отладочное сообщение 255.
+Apr 29 2024 14:58:16  INFO [main]: Информационное сообщение 255.
+Apr 29 2024 14:58:16  WARNING [main]: Предупреждение 255.
+Apr 29 2024 14:58:16  ERROR [func]: Ошибка открытия файла: No such file or directory
+Stack info:
+... ./test(+0x1a07) [0x561b42a43a07]
+... ./test(+0x141f) [0x561b42a4341f]
+... ./test(+0x14bb) [0x561b42a434bb]
+... /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7effbc79ed90]
+... /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7effbc79ee40]
+... ./test(+0x1305) [0x561b42a43305]

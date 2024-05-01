@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -Wpedantic -std=c11 main.c log.c -o log
+gcc -Wall -Wextra -Wpedantic main.c liblog.a -o log

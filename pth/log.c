@@ -160,12 +160,12 @@ void log_write(const char* func_name, int errnoflag, int error, int level,
     
     if (log_to_stderr) {
         console(level, buf);
-        if (level == LOG_ERR || level == LOG_CRIT)
+        if (level == LOG_CRIT)
             console(level, st_info);
     } else {
         strcat(buf, "\n");
         wrote = write(log_fd, buf, strlen(buf));
-        if (level == LOG_ERR || level == LOG_CRIT) {
+        if (level == LOG_CRIT) {
             wrote = write(log_fd, st_info, strlen(st_info));
         }
     }
