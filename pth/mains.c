@@ -1,5 +1,8 @@
 #include "vstr.h"
 
+
+vstr_t **array;
+
 int main() {
     char* str  = "Слово по русски";
     vstr_t *sdup = vstr_dup(str);
@@ -9,8 +12,16 @@ int main() {
 
     vstr_print(sdup, stdout);
     vstr_print(s2, stdout);
-
-    fprintf(stdout, "\n length = %ld\n", vstr_len(sc));
     vstr_print(sc, stdout);
-    printf("%s\n", sc->data);
+
+    array = (vstr_t**) malloc(sizeof(vstr_t*) * 10);
+    array[0] = sdup;
+    array[1] = s2;
+    array[2] = sc;
+
+    for (size_t i = 0; i < 3; i++) {
+        
+    }
+    
+    
 }

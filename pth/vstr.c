@@ -31,6 +31,8 @@ size_t vstr_len(vstr_t* str) {
 
 void vstr_print(vstr_t* str, FILE* f) {
     fwrite(str->data, sizeof(uint8_t), str->length, f);
+    if (f == stdout)
+        fwrite("\n", 1, 1, f);
 }
 
 void vstr_assign(vstr_t *str, const char* value) {
