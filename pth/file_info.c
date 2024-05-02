@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 
 static void get_lines(char* buf);
+static void get_lines1(FILE* f);
 
 char** init_file_list(size_t count) {
     char** flist = NULL;
@@ -144,6 +145,23 @@ void handle_file(char* filename) {
     close(fd);
 }
 
+void handle_file1(char* filename) {
+
+    FILE* fd;
+    size_t fsize;
+    char *fbuff = NULL;
+    
+
+    fd = fopen(filename, "r");
+    if (fd == NULL) {
+        err("Ошибка открытия файла: %s", filename);
+        return;
+    }
+    
+    get_lines1(fbuff);
+
+    fclose(fd);
+}
 
 static void get_lines(char* buf) {
 
@@ -152,6 +170,30 @@ static void get_lines(char* buf) {
     size_t index = 0, count = 0;
 
     while (*buf != '\0') {
+        if (*buf == '\n')  {
+            line[index] = '\0';
+            index = 0;
+            printf("%s\n", line);
+        }
+        else {
+            line[index++] = *buf;
+        }
+        //count++;
+        buf++;
+        //printf("count = %ld", count);
+    }
+    printf("finish\n");
+
+}
+
+
+static void get_lines1(FILE* f) {
+
+    char ip[16];
+
+    size_t index = 0, count = 0;
+
+    while (fscanf(f, "")) {
         if (*buf == '\n')  {
             line[index] = '\0';
             index = 0;

@@ -11,7 +11,8 @@ int is_dir(const char* file);
 void file_list(char *dir, char** flist);
 size_t get_count_files(char *dir);
 char** init_file_list(size_t count);
-void handle_file(char* filename);
 
+void handle_file(char* filename);
+void handle_file1(char* filename);
 
 #endif
