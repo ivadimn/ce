@@ -65,3 +65,19 @@ vstr_t* vstr_concat(vstr_t* left, vstr_t* right) {
     str->data[str->length] = 0;
     return str;
 }
+
+void vstr_split(vstr_t* str, char delim, char grp) {
+    size_t len = str->length;
+    uint8_t* buf = str->data;
+    uint8_t part[4096];
+
+    for (size_t i = 0; i < len; i++) {
+        
+        if ()
+        {
+            /* code */
+        }
+        
+    }
+    
+}

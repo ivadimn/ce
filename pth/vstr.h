@@ -21,5 +21,6 @@ void vstr_print(vstr_t* str, FILE* f);
 void vstr_assign(vstr_t *str, const char* value);
 vstr_t* vstr_dup(const char* source);
 vstr_t* vstr_concat(vstr_t* left, vstr_t* right);
+void vstr_split(vstr_t* str, char delim, char grp);
 
 #endif

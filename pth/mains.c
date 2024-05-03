@@ -20,7 +20,7 @@ int main() {
     array[2] = sc;
 
     for (size_t i = 0; i < 3; i++) {
-        
+        vstr_print(array[i], stdout);
     }
     
     
