@@ -3,16 +3,17 @@
 
 #include <stddef.h>
 
-#define MAX_PATH 1024
-#define LINE_SIZE 4096
+#define LINE_SIZE 8192
 
-size_t get_file_size(int fd);
-int is_dir(const char* file);
-void file_list(char *dir, char** flist);
-size_t get_count_files(char *dir);
-char** init_file_list(size_t count);
+typedef enum {HOST, ID, USER, DATE, REQUEST, 
+            STATUS, BYTES, REFERER, AGENT, COUNT} comb_t;
 
+
+void init_dicts();
+void remove_dicts();
 void handle_file(char* filename);
-void handle_file1(char* filename);
+void get_hosts(char*** hosts, long** bytes);
+void remove_hosts(char*** hosts, long** bytes);
+
 
 #endif

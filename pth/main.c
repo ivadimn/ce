@@ -1,4 +1,5 @@
 #include "log.h"
+#include "utils.h"
 #include "file_info.h"
 
 /*
@@ -12,7 +13,9 @@ void print_help(const char* app_name)
 int main(int argc, char** argv) {
 
 	size_t count = 0;
-	char** flist;
+	char** flist = NULL;
+	char** hosts = NULL;
+	long *bytes = NULL;
 
     if (argc < 3) {
         print_help(argv[0]);
@@ -28,8 +31,23 @@ int main(int argc, char** argv) {
 	for (size_t i = 0; i < count; i++) {
 		printf("%s\n", flist[i]);
 	}
-	handle_file(flist[0]);
 
+	init_dicts();
+	handle_file(flist[0]);
+	printf("Файл обработан\n");
+	get_hosts(&hosts, &bytes);
+	if (hosts && bytes) 	{
+		for (size_t i = 0; i < 10; i++)	{
+			printf("host: %s - %ld\n", hosts[i], bytes[i]);
+		}	
+	}
+	
+	remove_hosts(&hosts, &bytes);
+	
+
+	free_file_list(flist, count);
+	remove_dicts();
+	
 	return EXIT_SUCCESS;
 
 }
