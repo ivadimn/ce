@@ -26,9 +26,7 @@ void tree_delete(node_t* tree);
 
 void push(node_t** node, unsigned char* key, size_t value);
 void print_tree(node_t* node);
-size_t tree_count_nodes();
+size_t tree_count_nodes(node_t* tree);
 void get_leafs(node_t *tree, unsigned char** keys, size_t* values);
-
-
 
 #endif

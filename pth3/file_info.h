@@ -14,8 +14,11 @@ void init_mtx();
 void release_mtx();
 void remove_trees();
 void* handle_file(void* arg);
-size_t get_hosts(unsigned char*** hosts, size_t** bytes);
-void remove_hosts(unsigned char*** hosts, size_t** bytes);
+size_t get_urls(unsigned char*** hosts, size_t** bytes);
+void remove_urls(unsigned char*** hosts, size_t** bytes);
+
+size_t get_refers(unsigned char*** refs, size_t** count);
+void remove_refers(unsigned char*** refs, size_t** count);
 
 
 #endif

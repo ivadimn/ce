@@ -9,15 +9,17 @@
 #define URL_PC  3
 
 const size_t buff_size = 8 * 1024 * 1024;
-static node_t* tree_hosts = NULL;
+static node_t* tree_urls = NULL;
 static node_t* tree_refers = NULL;
+static unsigned char url[MAX_PART];
+
 
 static void save_data(unsigned char** arr); 
 
 static pthread_mutex_t mtx;
 
 void remove_trees() {
-    tree_delete(tree_hosts);
+    tree_delete(tree_urls);
     tree_delete(tree_refers);
 }
 void init_mtx() {
@@ -81,37 +83,59 @@ void *handle_file(void* arg) {
 static void save_data(unsigned char** arr)  {
     
     long bytes = strtol((char*)arr[BYTES], NULL, 10);
-    long url_start = -1, url_end = -1;
+    long url_start = -1, url_end = -1, len = -1;
     
-    unsigned char *full_url;
+    unsigned char* request = arr[REQUEST];
+    unsigned char* ref = arr[REFERER];
 
     pthread_mutex_lock(&mtx);
     if (bytes > 0) {
-        url_start = str_in((char*)arr[REQUEST], '\\');
-        url_end = str_in((char*)arr[REQUEST], 'H');
-        if (url_start > 0 && url_end > 0) {
-            full_url = (unsigned char*)strncat((char*)arr[HOST], (char*) &arr[REQUEST][url_start], url_end - url_start);
-            push(&tree_hosts, full_url, bytes);
+        url_start = str_in((char*)request, '/');
+	    url_end = str_instr((char*)request, " HTTP");
+        len = str_substr((char*) url, (char*)request, url_start, url_end);
+        if(len > 0) {
+            str_urldecode((char*)url);
+            push(&tree_urls, url, bytes);
         }
         else {
-            push(&tree_hosts, arr[HOST], bytes);
+            str_urldecode((char*)request);
+            push(&tree_urls, request, bytes);
         }
     }
-    push(&tree_refers, arr[REFERER], 1);
+
+    if (strcmp((char*)ref, "-") != 0) {
+        str_urldecode((char*)ref);
+        push(&tree_refers, ref, 1);    
+    }
+    
     pthread_mutex_unlock(&mtx);
     
 }
 
-size_t get_hosts(unsigned char*** hosts, size_t** bytes) {
-    size_t hosts_count = tree_count_nodes(tree_hosts);
-    *hosts = (unsigned char**) alloc(sizeof(unsigned char*) * hosts_count);
-    *bytes = (size_t*) alloc(sizeof(size_t) * hosts_count);
-    get_leafs(tree_hosts, *hosts, *bytes);
-    sort_shell(*hosts, *bytes, 0, hosts_count - 1);
-    return hosts_count;
+size_t get_urls(unsigned char*** urls, size_t** bytes) {
+    size_t urls_count = tree_count_nodes(tree_urls);
+    *urls = (unsigned char**) alloc(sizeof(unsigned char*) * urls_count);
+    *bytes = (size_t*) alloc(sizeof(size_t) * urls_count);
+    get_leafs(tree_urls, *urls, *bytes);
+    sort_shell(*urls, *bytes, 0, urls_count - 1);
+    return urls_count;
 }
 
-void remove_hosts(unsigned char*** hosts, size_t** bytes) {
+void remove_urls(unsigned char*** hosts, size_t** bytes) {
     free(*bytes);
     free(*hosts);
+}
+
+size_t get_refers(unsigned char*** refs, size_t** count) {
+    size_t ref_count = tree_count_nodes(tree_refers);
+    *refs = (unsigned char**) alloc(sizeof(unsigned char*) * ref_count);
+    *count = (size_t*) alloc(sizeof(size_t) * ref_count);
+    get_leafs(tree_refers, *refs, *count);
+    sort_shell(*refs, *count, 0, ref_count - 1);
+    return ref_count;
+}
+
+void remove_refers(unsigned char*** refs, size_t** count) {
+    free(*count);
+    free(*refs);
 }

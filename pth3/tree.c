@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 static size_t count_nodes = 0;
+static size_t node_index = 0;
 
 static node_t*  _create_node(unsigned char* key, size_t value) {
     node_t* node = (node_t*) alloc(sizeof(node_t));
@@ -73,18 +74,19 @@ size_t tree_count_nodes(node_t* tree) {
     _calc_count(tree);
     size_t count = count_nodes;
     count_nodes = 0;
+    node_index = 0;
     return count;
 }
 
 void get_leafs(node_t *tree, unsigned char** keys, size_t* values) {
-    static size_t index = 0;
+    
     if (tree == NULL)
         return;
     if (tree->left)
         get_leafs(tree->left, keys, values);
     if (tree->right)
         get_leafs(tree->right, keys, values);
-    keys[index] = tree->data.key;
-    values[index] = tree->data.value;
-    index++;
+    keys[node_index] = tree->data.key;
+    values[node_index] = tree->data.value;
+    node_index++;
 }
