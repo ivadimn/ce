@@ -12,43 +12,37 @@ void print_help(const char* app_name)
 
 int main(int argc, char** argv) {
 
-	/*int status;
-	struct addrinfo hints, *res, *p;
-	char ipstr[INET6_ADDRSTRLEN];*/
-
+	int sockfd, recv_count, send_count;
+	char buf[BUF_SIZE];
+	
 	if (argc != 2) 	{
 		print_help(argv[0]);
 		exit(1);
 	}
-	try_connect(argv[1], "23");
-		
- 	/*memset(&hints, 0, sizeof hints);		// очистка структуры
-	hints.ai_family = AF_UNSPEC;				// IPv4 либо IPv6
-	hints.ai_socktype = SOCK_STREAM;		// потоковый сокет TCP
+	
+	sockfd = try_connect(argv[1], "31173");
+	do {
+	recv_count = recv(sockfd, buf, BUF_SIZE - 1, 0);
+	if (recv_count == -1) {
+		close(sockfd);
+		err_sys("Error while reciving data\n");
+	}
+	
+	buf[recv_count] = '\0';
+	printf("client recived %d bytes: %d\n", recv_count, buf[0]);
+	printf("Введите команду$ ");
+	send_count = scanf("%s", buf);
+	printf("client send %ld bytes: %s\n", strlen(buf), buf);
+	send_count = send(sockfd, buf, strlen(buf), 0);
+	if (send_count == -1) {
+		close(sockfd);
+		err_sys("Error while sending data");
+	}
+	printf("client send %d bytes\n", send_count);
+	send(sockfd, "\n", 1, 0);
 	
 
-	if ((status = getaddrinfo(argv[1], NULL, &hints, &res)) != 0) {
-		fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
-		exit(2);
-	}
-	printf("IP adresses for %s:\n\n", argv[1]);
-	for (p = res; p != NULL; p = p->ai_next) {
-		void* addr;
-		char* ipver;
-			//получит в IPv4 и IPv6 поля разные
-		if (p->ai_family == AF_INET) {   //IPv4
-			struct sockaddr_in *ipv4  = (struct sockaddr_in*) p->ai_addr;
-			addr = &(ipv4->sin_addr);
-			ipver = "IPv4";
-		} else {
-			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6*) p->ai_addr;
-			addr = &(ipv6->sin6_addr);
-			ipver = "IPv6";
-		}
-		inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
-		printf(" %s: %s\n", ipver, ipstr);
-			
-	}
-	freeaddrinfo(res);*/
+	} while(recv_count > 0);
+	close(sockfd);
 	return EXIT_SUCCESS;
 }

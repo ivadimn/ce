@@ -1,6 +1,14 @@
 #include "net.h"
 #include "log.h"
 
+
+void* get_in_addr(struct sockaddr* addr) {
+    if (addr->sa_family == AF_INET)  {
+        return &(((struct sockaddr_in*)addr)->sin_addr);
+    }
+    return &(((struct sockaddr_in6*)addr)->sin6_addr);
+}
+
 int try_connect(char* hostname, char* port) {
     int status, sockfd;
 	struct addrinfo hints, *res;
@@ -10,27 +18,20 @@ int try_connect(char* hostname, char* port) {
 	hints.ai_socktype = SOCK_STREAM;		// потоковый сокет TCP
 
     if ((status = getaddrinfo(hostname, port, &hints, &res)) != 0) {
-		err("getaddrinfo error: %s\n", gai_strerror(status));
+		err_quit("getaddrinfo error: %s\n", gai_strerror(status));
 	}
 
-    if (res == NULL)
-        return -1;
-
+    
     if ((sockfd = socket(res->ai_family, 
             res->ai_socktype, res->ai_protocol)) < 0) {
-        return -1;
+        close(sockfd);        
+        err_quit("Error open socket: \n");
     }
     if (connect(sockfd, res->ai_addr, res->ai_addrlen) == 0)
     {
-        printf("Соединение установлено\n");
         freeaddrinfo(res);
-        shutdown(sockfd, SHUT_RDWR);
-        close(sockfd);
+        return sockfd;
     }
-    else {
-        err("connection error: %s\n", gai_strerror(status));
-    }
-    
-
-    return 0;
+    close(sockfd);
+    err_sys("connection error:\n");
 }

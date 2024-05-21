@@ -26,6 +26,15 @@
 #define MAX_LEN 4096
 #define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 
+void err_msg(const char*, ...);
+void err_dump(const char*, ...) __attribute__((noreturn));
+void err_quit(const char*, ...) __attribute__((noreturn));
+void err_cont(int, const char*, ...);
+void err_exit(int, const char*, ...) __attribute__((noreturn));
+void err_ret(const char*, ...);
+void err_sys(const char*, ...) __attribute__((noreturn));
+
+
 #define info(fmt, ...) logv(__func__, LOG_INFO, fmt __VA_OPT__(,) __VA_ARGS__)
 #define debug(fmt, ...) logv(__func__, LOG_DEBUG, fmt __VA_OPT__(,) __VA_ARGS__)
 #define err(fmt, ...) logv(__func__, LOG_ERR, fmt __VA_OPT__(,) __VA_ARGS__)

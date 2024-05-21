@@ -7,6 +7,11 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 
+#define BUF_SIZE 256
+
+
+void* get_addr(struct sockaddr *addr);
+ 
 int try_connect(char* hostname, char* port);
 
 #endif
