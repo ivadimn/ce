@@ -55,6 +55,7 @@ void handle_sqlite(conninfo_t* conninfo, const char* table, const char* column) 
 	double r_avg = 0;
 	int result;
 	open_db(SQLITE, conninfo);
+	is_valid_column_type(table, column);
 	result = avg(table, column, &r_avg);
 	printf("Result = %d\n", result);
 	close_db();

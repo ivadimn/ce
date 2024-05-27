@@ -43,6 +43,10 @@ void close_db(void) {
     }
 }
 
+int is_valid_column_type(const char* table, const char* column) {
+    return is_valid_sqlite_column(table, column);    
+}
+
 int avg(const char* table, const char* column, double* result) {
     
     sprintf(sql, select_stat, "AVG", column, table);

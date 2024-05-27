@@ -19,6 +19,7 @@ typedef struct {
 
 void open_db(engine_t engine, conninfo_t* conninfo);
 void close_db(void);
+int is_valid_column_type(const char* table, const char* column);
 
 int avg(const char* table, const char* column, double* result);
 
