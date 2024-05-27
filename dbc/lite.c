@@ -16,11 +16,14 @@ void close_sqlite() {
 int is_valid_sqlite_column(const char* table, const char* column) {
 
     int not_null, pk, autoinc;
-    char *data_type = NULL;
-    char *collation = NULL;
+    const char *data_type = NULL;
+    const char *collation = NULL;
     int result = sqlite3_table_column_metadata(db, NULL, table, column,
                                                 &data_type, &collation, 
                                                 &not_null, &pk, &autoinc);
+    if(result == SQLITE_ERROR) {
+        err_msg("Ошибка: %s", sqlite3_errmsg(db));    
+    }
 
     printf("Type - %s, collation - %s\n", data_type, collation);
     return result;
