@@ -25,7 +25,7 @@ void print_help(char* app_name)
 	printf("\n Использование: %s ОПЦИИ\n\n", app_name);
 	printf("  Options:\n");
 	printf("   -h --help                 		Печатает эту справку\n");
-	printf("   -b --dbms=SQLITE | POSTGRESQL 	Наименование базы данных\n");
+	printf("   -b --dbms=SQLITE | POSTGRESQL 	СУБД\n");
 	printf("   -d --dbname=DATABASE_NAME 		Наименование базы данных\n");
 	printf("   -t --table=TABLE_NAME     		Наименование таблицы\n");
   	printf("   -с --column=COLUMN_NAME   		Наименование колонки\n");
@@ -55,9 +55,13 @@ void handle_sqlite(conninfo_t* conninfo, const char* table, const char* column) 
 	double r_avg = 0;
 	int result;
 	open_db(SQLITE, conninfo);
-	is_valid_column_type(table, column);
+	result = is_valid_param(table, column);
+	if (result == INVALID_PARAM) {
+		err_quit("Ошибка: %s", get_err_msg());
+	}
+	
 	result = avg(table, column, &r_avg);
-	printf("Result = %d\n", result);
+	printf("Среднее значение по колонке %s таблицы %s = %f\n", column, table, r_avg);
 	close_db();
 }
 

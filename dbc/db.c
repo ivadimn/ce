@@ -6,6 +6,7 @@
 
 static engine_t db_engine;
 static char sql[SQL_LEN];
+static char error_message[ERR_MSG_LEN];
 
 
 const char* select_stat = "SELECT %s(%s) FROM %s; ";
@@ -43,8 +44,23 @@ void close_db(void) {
     }
 }
 
-int is_valid_column_type(const char* table, const char* column) {
-    return is_valid_sqlite_column(table, column);    
+char* get_err_msg() {
+    return error_message;
+}
+
+
+int is_valid_param(const char* table, const char* column) {
+
+    switch (db_engine)  {
+        case SQLITE:
+            return is_valid_sqlite_param(table, column, error_message);
+            
+        case POSTGRESQL:
+            return INVALID_PARAM;
+        default:
+            return INVALID_PARAM;
+    }
+    
 }
 
 int avg(const char* table, const char* column, double* result) {

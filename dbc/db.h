@@ -3,9 +3,12 @@
 
 
 #define SQL_LEN 4096
+#define ERR_MSG_LEN 256
 #define NAME_LEN 64
 #define INFO_LEN 23
 #define IP4_LEN 16
+
+#define INVALID_PARAM -1
 
 typedef enum { SQLITE, POSTGRESQL } engine_t;
 
@@ -19,7 +22,8 @@ typedef struct {
 
 void open_db(engine_t engine, conninfo_t* conninfo);
 void close_db(void);
-int is_valid_column_type(const char* table, const char* column);
+char* get_err_msg();
+int is_valid_param(const char* table, const char* column);
 
 int avg(const char* table, const char* column, double* result);
 
