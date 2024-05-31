@@ -51,26 +51,56 @@ void get_conn_info(conninfo_t* conninfo) {
 	get_line(conninfo->password, INFO_LEN);
 }
 
-void handle_sqlite(conninfo_t* conninfo, const char* table, const char* column) {
-	double r_avg = 0;
+void handle_db(conninfo_t* conninfo, const char* table, const char* column) {
+	double stat_result = 0;
 	int result;
-	open_db(SQLITE, conninfo);
+	open_db(conninfo);
 	result = is_valid_param(table, column);
 	if (result == INVALID_PARAM) {
 		err_quit("Ошибка: %s", get_err_msg());
 	}
-	
-	result = avg(table, column, &r_avg);
-	printf("Среднее значение по колонке %s таблицы %s = %f\n", column, table, r_avg);
-	close_db();
-}
+	printf("\n");
 
-void handle_psql(conninfo_t* conninfo, const char* table, const char* column) {
-	double r_avg = 0;
-	int result;
-	open_db(POSTGRESQL, conninfo);
-	result = avg(table, column, &r_avg);
-	printf("Result = %d\n", result);
+	result = avg(table, column, &stat_result);
+	if (result < 0)	{
+		err_msg("Ошибка вычисления средненго значения: %s", get_err_msg());
+	}
+	else {
+		printf("Среднее значение колонки %s.%s = %f\n", table, column, stat_result);
+	}
+	
+	result = min(table, column, &stat_result);
+	if (result < 0)	{
+		err_msg("Ошибка вычисления минимального значения: %s", get_err_msg());
+	}
+	else {
+		printf("Минимальное значение колонки %s.%s = %f\n", table, column, stat_result);
+	}
+
+	result = max(table, column, &stat_result);
+	if (result < 0)	{
+		err_msg("Ошибка вычисления максимального значения: %s", get_err_msg());
+	}
+	else {
+		printf("Максимальное значение колонки %s.%s = %f\n", table, column, stat_result);
+	}
+
+	result = sum(table, column, &stat_result);
+	if (result < 0)	{
+		err_msg("Ошибка вычисления суммы значений: %s", get_err_msg());
+	}
+	else {
+		printf("Сумма значений колонки %s.%s = %f\n", table, column, stat_result);
+	}
+
+	result = disp(table, column, &stat_result);
+	if (result < 0)	{
+		err_msg("Ошибка вычисления дисперсии значений: %s", get_err_msg());
+	}
+	else {
+		printf("Дисперсия значений колонки %s.%s = %f\n", table, column, stat_result);
+	}
+
 	close_db();
 }
 
@@ -79,7 +109,6 @@ int main (int argc,char **argv)
 {
 	int value, option_index = 0;
 	conninfo_t conninfo;
-	char dbms[INFO_LEN];
 	char table[NAME_LEN];
 	char column[NAME_LEN];
 
@@ -99,20 +128,16 @@ int main (int argc,char **argv)
 				print_help(argv[0]);
 				return EXIT_FAILURE;
 			case 'b':
-				strcpy(dbms, optarg);
-				info("Опция -b со значением: %s", optarg);
+				strcpy(conninfo.dbms, optarg);
 				break;
 			case 'd':
 				strcpy(conninfo.dbname, optarg);
-				info("Опция -d со значением: %s", optarg);
 				break;
 			case 't':
 				strcpy(table, optarg);
-				info("Опция -t со значением: %s", optarg);
 				break;
 			case 'c':
 				strcpy(column, optarg);
-				info("Опция -c со значением: %s", optarg);
 				break;	
 			case '?':
 				print_help(argv[0]);
@@ -121,13 +146,12 @@ int main (int argc,char **argv)
 				break;
 		}
 	}
-	if (strcmp(dbms, "SQLITE") == 0) {
-		handle_sqlite(&conninfo, table, column);
-	}
-	else if (strcmp(dbms, "POSTGRESQL") == 0) {
+
+	if (strcmp(conninfo.dbms, "SQLITE") != 0) {
 		get_conn_info(&conninfo);
-		handle_psql(&conninfo, table, column);
 	}
-		
+
+	handle_db(&conninfo, table, column);
+			
 	return 0;
 }

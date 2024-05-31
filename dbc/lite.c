@@ -34,12 +34,12 @@ int is_valid_sqlite_param(const char* table, const char* column, char* err) {
 }
 
 
-int select_sqlite_stat(const char* query, double* value) {
+int select_sqlite_stat(const char* query, double* value, char* err) {
     int result;
     sqlite3_stmt* stmt; 
 
     if(sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        err_msg("Ошибка подготовки SQL-запроса: %s", sqlite3_errmsg(db));
+        sprintf(err, "Ошибка подготовки SQL-запроса: %s", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return -1;
     }
@@ -47,7 +47,7 @@ int select_sqlite_stat(const char* query, double* value) {
     result = sqlite3_step(stmt);
     
     if(result != SQLITE_ROW) {
-        err_msg("Ошибка выполнения SQL-запроса: %s", sqlite3_errmsg(db));
+        sprintf(err, "Ошибка выполнения SQL-запроса: %s", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return -1;
     }
