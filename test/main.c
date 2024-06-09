@@ -1,23 +1,23 @@
-#include <GL/gl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include "utils.h"
 
-void Draw( void ) {
-   glClear( GL_COLOR_BUFFER_BIT ); 
-   glColor3f( 0.0f, 0.0f, 1.0f );
-   glLineWidth( 1 ); 
-   glBegin( GL_LINES ); 
-   glVertex2f( 0, 0.5f ); 
-   glVertex2f( 0, -0.5f ); 
-   glEnd();
-   glFlush();
-}
+#define MAX_LEN 64
 
-int main( int argc, char *argv[] ) { 
-   glInit( &argc, argv );
-   glInitWindowSize( 400, 300 );
-   glInitWindowPosition( 100, 100 );
-   glCreateWindow( "GL Demo" );
-   glDisplayFunc( Draw );
-   glClearColor( 0, 0, 0, 0 );
-   glMainLoop();
-   return 0;
+
+int main() {
+    char buf[MAX_LEN];
+    char arr[3][256];
+
+    time_t mytime = time(NULL);
+    struct tm *now = localtime(&mytime);
+    strftime(buf, MAX_LEN - 1, "%a, %d %b %Y %H:%M:%S %Z", now);
+
+    long count = split(arr, "GET /url_string HTTP/1.1", ' ', NULL, NULL);
+    printf("%s\n", arr[0]);
+    printf("%s\n", arr[1]);
+    printf("%s\n", arr[2]);
+
+    printf("%s\n", buf);
 }

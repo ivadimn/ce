@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include "log.h"
-#include "http.h"
 
 
 static char buffer[2048];
@@ -67,46 +66,49 @@ int set_non_blocking(int sock) {
   		perror("fcntl(F_SETFL)");
   		return -1;
  	}
-return 0;
+
+ return 0;
 }
 
 /*
 * прочитать данные из сокета
 */
 void do_read(int fd) {
-	request_t req;
 	int rc = recv(fd, buffer, sizeof(buffer), 0);
  	if (rc < 0)  {
-  		err_ret("Ошибка чтения сокета ...");
+  		perror("read");
   		return;
  	}
  	buffer[rc] = 0;
-	get_request(buffer, &req);
- 	
+ 	printf("read: %s\n", buffer);
 }
 
 /*
 * записать данные в сокет
 */
 void do_write(int fd) {
- 	int rc = send(fd, buffer, strlen(buffer), 0);
+	static const char* greeting = "O hai!\n";
+ 	int rc = send(fd, greeting, strlen(greeting), 0);
  	if (rc < 0) {
-  		err_ret("Ошибка записи в сокет");
+  		perror("write");
   		return;
  	}
 }
 
-#define BACKLOG 512
-#define MAX_EVENTS 128
-#define MAX_MESSAGE_LEN 2048
 
+void process_error(int fd)  {
+	printf("fd %d error!\n", fd);
+}
 
+#define MAX_EPOLL_EVENTS 128
+static struct epoll_event events[MAX_EPOLL_EVENTS];
+
+#define BACKLOG 128
 
 int main (int argc,char **argv)
 {
 	int value, option_index = 0;
 	int port;
-
 
 	if (argc == 1) 	{
 		print_help(argv[0]);
@@ -114,13 +116,12 @@ int main (int argc,char **argv)
 	}
 	
 	while ((value = getopt_long(argc, argv, "hp:", options, &option_index)) != -1) {
-        char* p;
 		switch (value) {
 			case 'h':
 				print_help(argv[0]);
 				return EXIT_FAILURE;
 			case 'p':
-				
+				char* p;
 				port = strtol(optarg, &p, 10);
 				break;
 			case '?':
@@ -131,88 +132,79 @@ int main (int argc,char **argv)
 		}
 	}
 
-    struct sockaddr_in server_addr, client_addr;
-    socklen_t client_len = sizeof(client_addr);
-
-    char buffer[MAX_MESSAGE_LEN];
-    memset(buffer, 0, sizeof(buffer));
-    
 	signal(SIGPIPE, SIG_IGN);  //игнорируем сигнал SIGPIPE
+
+ 	int efd = epoll_create(MAX_EPOLL_EVENTS);     //создаём ядерную структуру epoll
 
 	/*
 	* создаём серверный сокет и делаем его неблокирующим
 	*/
-	int sock_listen_fd = socket(AF_INET, SOCK_STREAM, 0);
- 	if (sock_listen_fd < 0)  {
-  		err_sys("Ошибка сосздания сокета.");
+	int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+ 	if (listenfd < 0)  {
+  		perror("socket");
+  		return EXIT_FAILURE;
  	}
- 	set_non_blocking(sock_listen_fd);
+ 	set_non_blocking(listenfd);
+
 	/*
 	* привязываем сокет к адресу и порту и начинаем слушать
 	*/
-	memset((char*)&server_addr, 0, sizeof(server_addr));
- 	server_addr.sin_family = AF_INET;
- 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
- 	server_addr.sin_port = htons(port);
+	struct sockaddr_in servaddr = {0};
+ 	servaddr.sin_family = AF_INET;
+ 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+ 	servaddr.sin_port = htons(port);
 
- 	if (bind(sock_listen_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-  		err_sys("Ошибка привязки сокета.");
-  	}
-
- 	if (listen(sock_listen_fd, BACKLOG) < 0)  {
-  		err_sys("Ошибка начала просдушивания сокета.");
+ 	if (bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
+  		perror("bind");
+  		return EXIT_FAILURE;
  	}
 
-    printf("Epoll echo server listening for connections on port: %d\n", port);
+ 	if (listen(listenfd, BACKLOG) < 0)  {
+  		perror("listen");
+  		return EXIT_FAILURE;
+ 	}
+
 	/*
 	* добавляем главный серверный сокет с список слежения epoll
 	*/
-	struct epoll_event ev, events[MAX_EVENTS]; //структра для сетевых соединений
-    int new_events, sock_conn_fd, epollfd;
-
-    epollfd = epoll_create(MAX_EVENTS);
-    if (epollfd < 0) {
-        err_sys("Ошибка создания epoll...");
-    }
-    
-
- 	ev.events = EPOLLIN | EPOLLET;
- 	ev.data.fd = sock_listen_fd;
- 	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, sock_listen_fd, &ev) < 0) {
-  		err_sys("Ошибка вызова epoll_ctl");
+	struct epoll_event listenev;
+ 	listenev.events = EPOLLIN | EPOLLET;
+ 	listenev.data.fd = listenfd;
+ 	if (epoll_ctl(efd, EPOLL_CTL_ADD, listenfd, &listenev) < 0) {
+  		perror("epoll_ctl");
+  		return EXIT_FAILURE;
  	}
+
+	struct epoll_event connev;  //структра для сетевых соединений
  	int events_count = 1;
 	//запускаем главный серверный цикл
 	for(;;)	{
 		//ждём сетевых соединений
-		new_events = epoll_wait(epollfd, events, MAX_EVENTS, -1);
-        if (new_events == -1) {
-            err_sys("Ошибка в epoll_wait ...");
-        }
-        
+		int nfds = epoll_wait(efd, events, MAX_EPOLL_EVENTS, -1);
 
-		for (int i = 0; i < new_events; i++) {
+		for (size_t i = 0; i < nfds; i++) {
 			//обрабатываем серверный дескриптор
-			if (events[i].data.fd == sock_listen_fd) {
-    			sock_conn_fd = accept(sock_listen_fd, (struct sockaddr*) &client_addr, &client_len);
-    			if (sock_conn_fd < 0) {      //соединились но что-то не так
-     				err_ret("Ошибка нового соединения ...");
+			if (events[i].data.fd == listenfd) {
+    			int connfd = accept(listenfd, NULL, NULL);
+    			if (connfd < 0) {      //соединились но что-то не так
+     				perror("accept");
      				continue;
     			}
-                if (events_count == MAX_EVENTS-1) {
-     				err_msg("Массив событий заполнен\n");
-     				close(sock_conn_fd);
+
+    			if (events_count == MAX_EPOLL_EVENTS-1) {
+     				printf("Event array is full\n");
+     				close(connfd);
      				continue;
     			}
 
 				//приняли соединение, делаем его не блокирующим
 				//и добавляем в пул epoll
-                set_non_blocking(sock_conn_fd);
-    			ev.data.fd = sock_conn_fd;
-    			ev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
-    			if (epoll_ctl(epollfd, EPOLL_CTL_ADD, sock_conn_fd, &ev) < 0) {
-     				err_ret("Ошибка в epoll_ctl ...");
-     				close(sock_conn_fd);
+    			set_non_blocking(connfd);
+    			connev.data.fd = connfd;
+    			connev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
+    			if (epoll_ctl(efd, EPOLL_CTL_ADD, connfd, &connev) < 0) {
+     				perror("epoll_ctl");
+     				close(connfd);
      				continue;
     			}
 		    	events_count++;
@@ -227,17 +219,16 @@ int main (int argc,char **argv)
      				do_write(fd);
 
     			if (events[i].events & EPOLLRDHUP)
-     				err_msg("Ошибка на сокете: %d", fd);
+     				process_error(fd);
 
 				//и рвём соединение
-    			//epoll_ctl(, EPOLL_CTL_DEL, fd, &connev);
-    			//close(fd);
-    			//events_count--;
+    			epoll_ctl(efd, EPOLL_CTL_DEL, fd, &connev);
+    			close(fd);
+    			events_count--;
 			}
 		}
+		
 	}
 
 	return 0;
 }
-
-
