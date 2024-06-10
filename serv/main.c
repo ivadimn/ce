@@ -199,7 +199,7 @@ int main (int argc,char **argv)
      				err_ret("Ошибка нового соединения ...");
      				continue;
     			}
-                if (events_count == MAX_EVENTS-1) {
+                if (events_count == MAX_EVENTS - 1) {
      				err_msg("Массив событий заполнен\n");
      				close(sock_conn_fd);
      				continue;

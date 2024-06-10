@@ -50,6 +50,13 @@ void vstr_print(vstr_t* str, FILE* f) {
     fwrite("\n", 1, 1, f);
 }
 
+void vstr_print_data(vstr_t* str, FILE* f) {
+    for (long i = 0; i < str->length; i++) {
+        fprintf(f, "%x ", str->data[i]);
+    }
+    fprintf(f, "\n");
+}
+
 void vstr_assign(vstr_t *str, const char* value) {
     uint8_t* tmp = (uint8_t*) value;
     long len = strlen(value);
@@ -123,12 +130,13 @@ vstr_t* vstr_substr(vstr_t *str, long start, long end) {
     return substr;
 }
 
-void vstr_split(vstr_array_t* arr, vstr_t* str, char delim, vstr_t* g_open, vstr_t* g_close) {
+void vstr_split(vstr_array_t* arr, vstr_t* str, char* delim, vstr_t* g_open, vstr_t* g_close) {
     long len = str->length, index = 0;
     uint8_t* buf = str->data;
     uint8_t in_group = 0;
     long g_index = -1;
     int is_delim = 0;
+    vstr_t* dlms = vstr_dup(delim);
 
     uint8_t *part = (uint8_t*) malloc(sizeof(uint8_t) * MAX_PART);
         
@@ -136,12 +144,13 @@ void vstr_split(vstr_array_t* arr, vstr_t* str, char delim, vstr_t* g_open, vstr
         
         switch (in_group)  {
             case 0:
-                if (buf[i] == delim && !is_delim) {
-                    part[index] = '\0';
-                    vstr_array_adds(arr, (char*)part);
-                    index = 0;
-                    is_delim = 1;
-                    
+                if (vstr_in(dlms, buf[i]) >= 0) {
+                    if (!is_delim) {
+                        part[index] = '\0';
+                        vstr_array_adds(arr, (char*)part);
+                        index = 0;
+                        is_delim = 1;                        
+                    }
                 } 
                 else if(g_open && (g_index = vstr_in(g_open, buf[i])) >= 0) {
                     in_group = 1;
@@ -165,8 +174,11 @@ void vstr_split(vstr_array_t* arr, vstr_t* str, char delim, vstr_t* g_open, vstr
         }
 
     }
-    part[index] = '\0';
-    vstr_array_adds(arr, (char*)part);
+    if (index > 0) {
+        part[index] = '\0';
+        vstr_array_adds(arr, (char*)part);    
+    }
+    vstr_free(dlms);
     free(part);
 }
 
@@ -218,9 +230,8 @@ void vstr_urldecode(vstr_t *str) {
     vstr_assign(str, (char*) buf);
 }
 
-void vstr_cpy(char* buffer, vstr_t* str, long start, long end) {
-    long len = strlen(buffer);
-    
+void vstr_replace(vstr_t* str, char what, char how) {
+    vstr_t *tmp = vstr_dup()
 }
 
 
