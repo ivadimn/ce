@@ -230,8 +230,13 @@ void vstr_urldecode(vstr_t *str) {
     vstr_assign(str, (char*) buf);
 }
 
-void vstr_replace(vstr_t* str, char what, char how) {
-    vstr_t *tmp = vstr_dup()
+void vstr_cut(vstr_t* str, long count, int where) {
+    long start, end;
+    uint8_t* tmp = (uint8_t*)malloc(sizeof(uint8_t) * (str->length - count + 1));
+    if (where == 0) {
+        
+    }
+    
 }
 
 

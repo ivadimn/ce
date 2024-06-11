@@ -41,6 +41,14 @@ void get_request(char* buffer, request_t* request) {
     vstr_free(req);
 }
 
-void init_session(int fd) {
-    
+int init_session(int fd, struct epoll_event *ev) {
+    session_t* session = (session_t*) malloc(sizeof(session_t));
+    if (session == NULL) {
+        err_msg("Ошибка выделения памяти.");
+        return -1;
+    }
+    session->fd = fd;
+    session->state = ACCEPT;
+    ev->data.ptr = session;
+    return 0;     
 }

@@ -42,7 +42,7 @@ vstr_t* vstr_substr(vstr_t *str, long start, long end);
 uint8_t vstr_at(vstr_t *str, long index);
 void vstr_put_ch(vstr_t *str, char ch);
 void vstr_urldecode(vstr_t *str);
-void vstr_replace(vstr_t* str, char what, char how);
+void vstr_cut(vstr_t* str, long count, int where);
 
 vstr_array_t* vstr_array_create(long size);
 void vstr_array_free(vstr_array_t* arr);

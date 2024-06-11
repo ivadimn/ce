@@ -8,9 +8,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/epoll.h>
 #include <unistd.h>
-
 #include "log.h"
 #include "http.h"
 
@@ -207,6 +205,12 @@ int main (int argc,char **argv)
 
 				//приняли соединение, делаем его не блокирующим
 				//и добавляем в пул epoll
+				if (init_session(sock_conn_fd, &ev) == -1) {
+					err_msg("Ошибка инициализации сессии.");
+					close(sock_conn_fd);
+					continue;
+				}
+				
                 set_non_blocking(sock_conn_fd);
     			ev.data.fd = sock_conn_fd;
     			ev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;

@@ -1,6 +1,8 @@
 #ifndef _HTTP_H_
 #define _HTTP_H_
 
+#include <sys/epoll.h>
+
 #define MAX_URI 2048
 #define VER_LEN 16
 #define METHOD_LEN 16
@@ -40,7 +42,7 @@ typedef struct {
 
 
 void get_request(char* buffer, request_t* request);
-void init_session(int fd);
+int init_session(int fd, struct epoll_event* ev);
 
 
 #endif
