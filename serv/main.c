@@ -3,7 +3,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
+
 #include <signal.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -13,7 +13,7 @@
 #include "http.h"
 
 
-static char buffer[2048];
+
 
 static struct option options[] = {
 		{"help", no_argument, 0, 'h'},
@@ -49,56 +49,9 @@ int get_line(char* line, int size) {
     return index - 1;
 }
 
-/*
-* установить неблокирующий режим для сокета
-*/
-int set_non_blocking(int sock) {
-	 int opts;
-
- 	opts = fcntl(sock,F_GETFL);
- 	if (opts < 0) {
-  		perror("fcntl(F_GETFL)");
-  		return -1;
- 	}
- 	opts = (opts | O_NONBLOCK);
- 	if (fcntl(sock,F_SETFL,opts) < 0) {
-  		perror("fcntl(F_SETFL)");
-  		return -1;
- 	}
-return 0;
-}
-
-/*
-* прочитать данные из сокета
-*/
-void do_read(int fd) {
-	request_t req;
-	int rc = recv(fd, buffer, sizeof(buffer), 0);
- 	if (rc < 0)  {
-  		err_ret("Ошибка чтения сокета ...");
-  		return;
- 	}
- 	buffer[rc] = 0;
-	get_request(buffer, &req);
- 	
-}
-
-/*
-* записать данные в сокет
-*/
-void do_write(int fd) {
- 	int rc = send(fd, buffer, strlen(buffer), 0);
- 	if (rc < 0) {
-  		err_ret("Ошибка записи в сокет");
-  		return;
- 	}
-}
-
 #define BACKLOG 512
 #define MAX_EVENTS 128
 #define MAX_MESSAGE_LEN 2048
-
-
 
 int main (int argc,char **argv)
 {
@@ -205,14 +158,14 @@ int main (int argc,char **argv)
 
 				//приняли соединение, делаем его не блокирующим
 				//и добавляем в пул epoll
+
+				set_non_blocking(sock_conn_fd);
+				
 				if (init_session(sock_conn_fd, &ev) == -1) {
 					err_msg("Ошибка инициализации сессии.");
 					close(sock_conn_fd);
 					continue;
 				}
-				
-                set_non_blocking(sock_conn_fd);
-    			ev.data.fd = sock_conn_fd;
     			ev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
     			if (epoll_ctl(epollfd, EPOLL_CTL_ADD, sock_conn_fd, &ev) < 0) {
      				err_ret("Ошибка в epoll_ctl ...");
@@ -222,13 +175,15 @@ int main (int argc,char **argv)
 		    	events_count++;
 
    			} else {    //не сереверный дескриптор
+
 				int fd = events[i].data.fd;
+				session_t *session = (session_t *) events[i].data.ptr;
 
 			    if (events[i].events & EPOLLIN)    //читаем если что-то пришло
-     				do_read(fd);
+     				read_socket(session);
 
     			if (events[i].events & EPOLLOUT)	//или пишем если надо что-то заисать
-     				do_write(fd);
+     				write_socket(session);
 
     			if (events[i].events & EPOLLRDHUP)
      				err_msg("Ошибка на сокете: %d", fd);
