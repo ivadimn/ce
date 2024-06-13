@@ -18,8 +18,8 @@
 static struct option options[] = {
 		{"help", no_argument, 0, 'h'},
 		{"port", required_argument, 0, 'p'},
-    	/*{"dbname", required_argument, 0, 'd'},
-		{"table", required_argument, 0, 't'},
+    	{"dir", required_argument, 0, 'd'},
+	/*	{"table", required_argument, 0, 't'},
 		{"column", required_argument, 0, 'c'},*/
 		{NULL, 0, 0, 0}
 };
@@ -33,8 +33,8 @@ void print_help(char* app_name)
 	printf("  Options:\n");
 	printf("   -h --help                 		Печатает эту справку\n");
 	printf("   -p --port=PORT_NUMBER		 	Номер порта\n");
-	/*printf("   -d --dbname=DATABASE_NAME 		Наименование базы данных\n");
-	printf("   -t --table=TABLE_NAME     		Наименование таблицы\n");
+	printf("   -d --dir=DIR_NAME		 		Наименование каталога с файлами\n");
+	/*printf("   -t --table=TABLE_NAME     		Наименование таблицы\n");
   	printf("   -с --column=COLUMN_NAME   		Наименование колонки\n");*/
 	printf("\n");
 }

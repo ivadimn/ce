@@ -39,6 +39,7 @@ typedef struct {
     int fd;
 } session_t;
 
+void set_work_dir(const char* dir);
 void print_request(session_t* session);
 int set_non_blocking(int sock);
 int init_session(int fd, struct epoll_event* ev);

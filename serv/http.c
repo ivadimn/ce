@@ -21,6 +21,19 @@ static char *response_headers[] = {
     "Content-Type"
 };    
 
+static char work_dir[1024];
+
+void set_work_dir(const char* dir) {
+    long len = strlen(dir);
+    if(len >= 1023)
+        err_quit("Слишком длинное имя каталога.")ж
+    strcpy(work_dir, dir);
+    if (work_dir[len - 1] != '/') {
+        
+    }
+    
+}
+
 
 static void _get_start_line(vstr_t* sl, request_t* request) {
     vstr_array_t* sl_arr = vstr_array_create(3);
