@@ -11,6 +11,7 @@ void free_file_list(char** flist, size_t count);
 
 size_t get_file_size(int fd);
 int is_dir(const char* file);
+size_t check_file(const char* filename);
 
 void file_list(char *dir, char** flist);
 size_t get_count_files(char *dir);

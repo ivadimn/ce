@@ -71,9 +71,11 @@ int main (int argc,char **argv)
 				print_help(argv[0]);
 				return EXIT_FAILURE;
 			case 'p':
-				
 				port = strtol(optarg, &p, 10);
 				break;
+			case 'd':
+				set_work_dir(optarg);
+				break;	
 			case '?':
 				print_help(argv[0]);
 				return EXIT_FAILURE;

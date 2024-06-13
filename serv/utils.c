@@ -8,15 +8,12 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-const char hex[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
 
-static long inhex(char ch) {
-	const char* hexch = "0123456789ABCDEF";
-	for (long i = 0; i < 16; i++)  {
-        if (hexch[i] == ch)
-            return i;
-    }
-    return -1;
+/*
+* Проверяем наличие файла и взможность его копирования
+*/
+int check_file(const char* filename) {
+    int fd = 
 }
 
 /*

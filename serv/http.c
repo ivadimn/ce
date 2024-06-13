@@ -26,12 +26,12 @@ static char work_dir[1024];
 void set_work_dir(const char* dir) {
     long len = strlen(dir);
     if(len >= 1023)
-        err_quit("Слишком длинное имя каталога.")ж
+        err_quit("Слишком длинное имя каталога.");
     strcpy(work_dir, dir);
     if (work_dir[len - 1] != '/') {
-        
+        work_dir[len - 1] = '/';
+        work_dir[len] = '\0';
     }
-    
 }
 
 
