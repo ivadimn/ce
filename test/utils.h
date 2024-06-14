@@ -18,11 +18,4 @@ void file_list(char *dir, char** flist);
 size_t get_count_files(char *dir);
 void* alloc(size_t size);
 
-long split(char** arr, char* str, char delim, char* g_open, char* g_close);
-long str_in(char *str, char ch);
-
-long str_instr(char *str, char* s);
-long str_substr(char* dest, char *str, long start, long end);
-void str_urldecode(char *str);
-
 #endif
