@@ -2,6 +2,7 @@
 #include "http.h"
 #include "vstr.h"
 #include "utils.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
@@ -9,7 +10,19 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+char *body = "<!DOCTYPE html> \
+<html> \
+<head> \
+    <meta charset=\"UTF-8\"> \
+    <title>Магазин бытовой техники Comfort</title> \
+</head> \
+<body> \
+Hello from server!!! \
+</body> \
+</html>";
+
 static char buffer[2048];
+static char work_dir[1024];
 
 static char *methods[] = {
     "OPTIONS", "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "TRACE", "CONNECT" };
@@ -21,7 +34,32 @@ static char *response_headers[] = {
     "Content-Type"
 };    
 
-static char work_dir[1024];
+static int get_status_code() {
+    switch (errno) {
+        case EBADF:
+        case ENOENT:
+            return 404;
+        case EACCES:
+        case EMFILE:
+            return 403;
+        default:
+            return 404;
+    }
+}
+
+static char* get_status_message(int status_code) {
+    switch (status_code) {
+        case 200:
+            return "OK";
+        case 404:
+            return "Not Found";
+        case 403:
+            return "Forbidden";
+        default:
+            return "Not Found";
+    }
+}
+
 
 void set_work_dir(const char* dir) {
     long len = strlen(dir);
@@ -29,8 +67,8 @@ void set_work_dir(const char* dir) {
         err_quit("Слишком длинное имя каталога.");
     strcpy(work_dir, dir);
     if (work_dir[len - 1] != '/') {
-        work_dir[len - 1] = '/';
-        work_dir[len] = '\0';
+        work_dir[len] = '/';
+        work_dir[len + 1] = '\0';
     }
 }
 
@@ -72,6 +110,26 @@ void print_request(session_t* session) {
     }
 }
 
+int init_session(int fd, struct epoll_event *ev) {
+    session_t* session = (session_t*) malloc(sizeof(session_t));
+    if (session == NULL) {
+        err_msg("Ошибка распределения памяти.");
+        return -1;
+    }
+    session->fd = fd;
+    session->state = ACCEPTED;
+    session->is_ready = 0;
+    ev->data.ptr = session;
+    return 0;     
+}
+
+/*
+* закрыть сессию с клиетом
+*/
+int close_session(session_t* session) {
+    return 0;
+}
+
 /*
 * установить неблокирующий режим для сокета
 */
@@ -106,34 +164,33 @@ void get_request(char* buffer, request_t* request) {
 }
 
 
-void prepare_response(response_t* response, int status_code) {
-    char time_buf[HEADER_VALUE_LEN];
+void prepare_response(session_t* session) {
+
+    int status_code = 200;
+    char filename[MAX_PATH];
     time_t mytime = time(NULL);
     struct tm *now = localtime(&mytime);
-    strftime(time, MAX_LEN - 1, "%a, %d %b %Y %H:%M:%S %Z", now);
-    snprintf(response->status, STATUS_LEN, "%s %d %s\n\r", "HTTP\1.1", 200, "OK");
-    response->hcount = 4;
-    response->headers = (header_t*) alloc(sizeof(header_t) * response->hcount);
-    strcpy(response->headers[0].name, "Date");
     
-    for (size_t i = 0; i < response->hcount; i++) {
-        
+    snprintf(filename, MAX_PATH - 1, "%s%s", work_dir, session->reqv.uri);
+    size_t fsize = check_file(filename);
+    //size_t fsize = strlen(body);
+    if(fsize == 0) {
+        status_code = get_status_code();
     }
-    
-
-}
-
-
-int init_session(int fd, struct epoll_event *ev) {
-    session_t* session = (session_t*) malloc(sizeof(session_t));
-    if (session == NULL) {
-        err_msg("Ошибка распределения памяти.");
-        return -1;
-    }
-    session->fd = fd;
-    session->state = ACCEPTED;
-    ev->data.ptr = session;
-    return 0;     
+    session->resp.fsize = fsize;
+    snprintf(session->resp.status, STATUS_LEN, "%s %d %s\n\r", "HTTP/1.1", status_code, get_status_message(status_code));
+    session->resp.hcount = 5;
+    session->resp.headers = (header_t*) alloc(sizeof(header_t) * session->resp.hcount);
+    strcpy(session->resp.headers[0].name, "Date");
+    strftime(session->resp.headers[0].value, HEADER_VALUE_LEN - 1, "%a, %d %b %Y %H:%M:%S %Z", now);
+    strcpy(session->resp.headers[1].name, "Server");
+    strcpy(session->resp.headers[1].value, "ivadimn.ru");
+    strcpy(session->resp.headers[2].name, "Content-Length");
+    snprintf(session->resp.headers[2].value, HEADER_VALUE_LEN - 1, "%ld", fsize);
+    strcpy(session->resp.headers[3].name, "Connection");
+    strcpy(session->resp.headers[3].value, "close");
+    strcpy(session->resp.headers[4].name, "Content-Type");
+    strcpy(session->resp.headers[4].value, "text/html;charset=utf-8");
 }
 
 void read_socket(session_t* session) {
@@ -145,9 +202,51 @@ void read_socket(session_t* session) {
  	buffer[rc] = 0;
 	get_request(buffer, &session->reqv);
     print_request(session);
+    prepare_response(session);
 
 }
 
 void write_socket(session_t* session) {
 
+    int rc = 0, send_count = 0;
+    uint8_t *data;
+    long send_len;
+    char filename[MAX_PATH];
+    snprintf(filename, MAX_PATH - 1, "%s%s", work_dir, session->reqv.uri);
+
+    vstr_t *buffer = vstr_create((HEADER_NAME_LEN + HEADER_VALUE_LEN) * 
+                        (session->resp.hcount + 1) + session->resp.fsize);
+    buffer = vstr_append(buffer, session->resp.status);
+    for (int i = 0; i < session->resp.hcount; i++) {
+        buffer = vstr_append(buffer, session->resp.headers[i].name);
+        buffer = vstr_append(buffer, ": ");
+        buffer = vstr_append(buffer, session->resp.headers[i].value);
+        buffer = vstr_append(buffer, "\r\n");
+    }
+    buffer = vstr_append(buffer, "\r\n");
+    printf("Len headers %ld\n", buffer->length);
+    printf("file size %ld\n", session->resp.fsize);
+     
+    //read_file(filename, session->resp.fsize, (char*) buffer->data, buffer->length);
+    //buffer->length += session->resp.fsize;
+    buffer = vstr_append(buffer, body);
+    printf("Total Len %ld\n", buffer->length);
+    send_len = buffer->length;
+    data = buffer->data;
+    vstr_print(buffer, stdout);
+    do {
+        printf("Before send\n");
+        rc = send(session->fd, data, send_len, 0);
+        printf("rc - %d\n", rc);
+        if (rc < 0) {
+            err_ret("Ошибка записи в сокет");
+            return;
+        }
+        send_count += rc;
+        data += send_count;
+        send_len -= send_count;
+        printf("send count - %d\n", send_count);
+    } while(send_count < buffer->length);
+    
+    vstr_free(buffer);
 }

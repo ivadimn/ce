@@ -64,7 +64,7 @@ int main (int argc,char **argv)
 		return EXIT_FAILURE;
 	}
 	
-	while ((value = getopt_long(argc, argv, "hp:", options, &option_index)) != -1) {
+	while ((value = getopt_long(argc, argv, "hp:d:", options, &option_index)) != -1) {
         char* p;
 		switch (value) {
 			case 'h':
@@ -181,11 +181,18 @@ int main (int argc,char **argv)
 				int fd = events[i].data.fd;
 				session_t *session = (session_t *) events[i].data.ptr;
 
-			    if (events[i].events & EPOLLIN)    //читаем если что-то пришло
+			    if (events[i].events & EPOLLIN) {    //читаем если что-то пришло
+					printf("Read socket\n");
      				read_socket(session);
+				}
 
-    			if (events[i].events & EPOLLOUT)	//или пишем если надо что-то заисать
+    			if (events[i].events & EPOLLOUT) {	//или пишем если надо что-то заисать
+					printf("Write socket\n");
      				write_socket(session);
+					//epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
+    				//close(fd);
+					//printf("Socket closed\n");
+				}	
 
     			if (events[i].events & EPOLLRDHUP)
      				err_msg("Ошибка на сокете: %d", fd);

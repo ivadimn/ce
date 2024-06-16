@@ -9,11 +9,38 @@
 #include <fcntl.h>
 
 
+const size_t max_block_size = 1024 * 1024 * 8;
 /*
 * Проверяем наличие файла и взможность его копирования
 */
-int check_file(const char* filename) {
-    int fd = 
+size_t check_file(const char* filename) {
+    int fd = open(filename, O_RDONLY, S_IRUSR);
+    if (fd == -1)
+        return 0;
+    size_t fsize = get_file_size(fd);
+    if (fsize == 0)
+        return 0;
+    close(fd);
+    return fsize;
+}
+
+/*
+* Читает содержимое файла в буфер
+*/
+int read_file(const char* filename, size_t fsize, char* buffer, long buf_off) {
+    size_t read_count = 0;            
+    char *bs = (buffer + buf_off);  
+    int fd = open(filename, O_RDONLY, S_IRUSR);
+    if (fd == -1)
+        return -1;
+
+    size_t buf_size = (fsize > max_block_size) ? max_block_size : fsize;
+
+    while((read_count = read(fd, bs, buf_size)) == buf_size) {
+        bs += buf_size;
+    }
+    close(fd);
+    return 0;    
 }
 
 /*

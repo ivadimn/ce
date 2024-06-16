@@ -3,7 +3,7 @@
 
 #include <sys/epoll.h>
 
-#define MAX_URI 2048
+#define MAX_URI 1024
 #define VER_LEN 16
 #define METHOD_LEN 16
 #define STATUS_LEN 64
@@ -29,24 +29,27 @@ typedef struct {
 typedef struct {
     char status[STATUS_LEN];
     int hcount;
+    size_t fsize;
     header_t* headers;
-    unsigned char* body;
 } response_t;
 
 typedef struct {
     se_state_t state;
     request_t reqv;
+    response_t resp;
     int fd;
+    int is_ready;
 } session_t;
 
 void set_work_dir(const char* dir);
 void print_request(session_t* session);
 int set_non_blocking(int sock);
 int init_session(int fd, struct epoll_event* ev);
+int close_session(session_t* session);
 
 void get_request(char* buffer, request_t* request);
 
-void prepare_response(response_t* response, int status_code);
+void prepare_response(session_t* session);
 
 void read_socket(session_t* session);
 void write_socket(session_t* session);

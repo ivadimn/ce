@@ -113,6 +113,25 @@ vstr_t* vstr_concat(vstr_t* left, vstr_t* right) {
     return str;
 }
 
+vstr_t* vstr_append(vstr_t* left, const char* right) {
+    vstr_t *str = NULL;
+    long len_r = strlen(right);
+    long len_l = left->length;
+    if (len_l + len_r >= left->size) {
+        str = vstr_create(len_l + len_r);
+        if (str == NULL)
+            return NULL;
+        memcpy(str->data, left->data, len_l);
+        vstr_free(left);
+    } else {
+        str = left;
+    }
+    memcpy(str->data + len_l, right, len_r);
+    str->length = len_l + len_r;
+    str->data[str->length] = 0;
+    return str;
+}
+
 long vstr_in(vstr_t *str, char ch) {
     for (long i = 0; i < str->length; i++)  {
         if (str->data[i] == ch)
