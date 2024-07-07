@@ -22,15 +22,15 @@ typedef struct {
     char password[INFO_LEN];
 } conninfo_t;
 
-void open_db(conninfo_t* conninfo);
-void close_db(void);
+void* open_db(conninfo_t* conninfo);
+void close_db(void* db);
 char* get_err_msg();
-int is_valid_param(const char* table, const char* column);
+int is_valid_param(void* db, const char* table, const char* column);
 
-int avg(const char* table, const char* column, double* result);
-int min(const char* table, const char* column, double* result);
-int max(const char* table, const char* column, double* result);
-int sum(const char* table, const char* column, double* result);
-int disp(const char* table, const char* column, double* result);
+int avg(void* db, const char* table, const char* column, double* result);
+int min(void* db, const char* table, const char* column, double* result);
+int max(void* db, const char* table, const char* column, double* result);
+int sum(void* db, const char* table, const char* column, double* result);
+int disp(void* db, const char* table, const char* column, double* result);
 
 #endif
