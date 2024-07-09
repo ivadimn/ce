@@ -1,4 +1,6 @@
+#include "def.h"
 #include "utils.h"
+#include <stdio.h>
 #include <sys/stat.h>
 
 
@@ -7,22 +9,17 @@ int is_valid_file(char* filename, char* err_msg) {
     struct stat stat_buff;
     int result = stat(filename, &stat_buff);
     if (result == -1) {
-        err_cont("Ошибка при получении информации о файле: %s", finfo->full_name);
-        finfo->type = TYPE_NONE;
-        return;
+        snprintf(err_msg, ERR_MSG_LEN - 1, 
+                "Ошибка при получении информации о файле: %s", filename);
+        return -1;
     }
     
     if (S_ISDIR(stat_buff.st_mode)) {
-        finfo->type = TYPE_DIR;
-        finfo->size = get_dir_size(finfo->full_name);
+        snprintf(err_msg, ERR_MSG_LEN - 1, 
+                "Указанный файл: %s является каталогом" , filename);
+        return -1;
     }
-    else {
-        finfo->type = TYPE_FILE;
-        finfo->size = stat_buff.st_size;
-    }
-    finfo->flist = NULL;
-    finfo->date = stat_buff.st_ctime;
-
+    return 0;
 }
 
 
